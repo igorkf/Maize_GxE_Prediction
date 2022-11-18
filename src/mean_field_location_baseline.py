@@ -1,9 +1,11 @@
 import pandas as pd
+import numpy as np
+
+
+VAL_YEAR = 2021
 
 
 if __name__ == '__main__':
-
-    VAL_YEAR = 2021
 
     trait = pd.read_csv(
         'data/Training_Data/1_Training_Trait_Data_2014_2021.csv',
@@ -12,7 +14,7 @@ if __name__ == '__main__':
 
     xtrain = trait[trait['Year'] < VAL_YEAR]
     yhat = xtrain.groupby('Field_Location')['Yield_Mg_ha'].mean().rename('yhat')
-
+    
     yval = trait[trait['Year'] == VAL_YEAR][['Field_Location', 'Yield_Mg_ha']]
     yval = yval.merge(yhat, on='Field_Location', how='left')
     
@@ -24,7 +26,4 @@ if __name__ == '__main__':
     print(rmse_per_field.describe())
     print('RMSE:', rmse)
     print(yval.corr())
-
-
-
-
+    
