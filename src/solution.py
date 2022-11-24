@@ -4,9 +4,10 @@ from sklearn import ensemble
 
 from preprocessing import (
     process_metadata,
-    process_test_data, 
+    process_test_data,
     split_trait_data,
-    feature_engineer
+    feature_engineer,
+    extract_target
 )
 
 
@@ -18,7 +19,6 @@ META_TRAIN_PATH = 'data/Training_Data/2_Training_Meta_Data_2014_2021.csv'
 META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 
 META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon']
-
 
 
 if __name__ == '__main__':
@@ -36,10 +36,17 @@ if __name__ == '__main__':
     trait = trait.merge(meta[META_COLS], on='Env', how='left')
 
     # split train/val
-    xtrain, xval, ytrain, yval = split_trait_data(trait, val_year=VAL_YEAR, fillna=False)
+    xtrain, xval = split_trait_data(trait, val_year=VAL_YEAR, fillna=False)
 
-    # feat eng test
-    xtest = feature_engineer(xtest, is_test=True)
+    # feat engineer
+    xtrain = feature_engineer(xtrain)
+    xval = feature_engineer(xval)
+    xtest = feature_engineer(xtest)
+    
+    # extract targets
+    ytrain = extract_target(xtrain)
+    yval = extract_target(xval)
+    _ = extract_target(xtest)
 
     print(xtrain.isnull().sum() / len(xtrain))
     print(xval.isnull().sum() / len(xval))
@@ -69,7 +76,7 @@ if __name__ == '__main__':
         'ytrue': yval.values,
         'yhat': yhat
     })
-    df_eval.to_csv('output/oof.csv', index=False)
+    df_eval.to_csv('output/oof_solution.csv', index=False)
     
     # evaluate
     rmse_per_field = df_eval.groupby('Field_Location').apply(

@@ -15,30 +15,27 @@ def process_metadata(path: str, encoding: str = 'latin-1'):
 
 
 def process_test_data(path: str):
-    df = pd.read_csv(path).drop(['Yield_Mg_ha'], axis=1)
+    df = pd.read_csv(path)
     df['Field_Location'] = df['Env'].str.replace('(_).*', '', regex=True)
     return df
 
 
-def feature_engineer(df, is_test: bool = False):
-    if not is_test:
-        return (
-            df
-            .groupby(['Env', 'Hybrid']).agg(
-                weather_station_lat=('weather_station_lat', 'mean'),
-                weather_station_lon=('weather_station_lon', 'mean'),
-                mean_yield=('Yield_Mg_ha', 'mean')
-            )
+def feature_engineer(df):
+    df_agg = (
+        df
+        .groupby(['Env', 'Hybrid']).agg(
+            weather_station_lat=('weather_station_lat', 'mean'),
+            weather_station_lon=('weather_station_lon', 'mean'),
+            Yield_Mg_ha=('Yield_Mg_ha', 'mean')
         )
-    else:
-        return (
-            df
-            .groupby(['Env', 'Hybrid']).agg(
-                weather_station_lat=('weather_station_lat', 'mean'),
-                weather_station_lon=('weather_station_lon', 'mean')
-            )
-        )
+    )
+    return df_agg
 
+
+def extract_target(df):
+    y = df['Yield_Mg_ha']
+    del df['Yield_Mg_ha']
+    return y
 
 
 def split_trait_data(df, val_year: int, fillna: bool = False):
@@ -50,16 +47,7 @@ def split_trait_data(df, val_year: int, fillna: bool = False):
     if fillna:
         raise NotImplementedError('"fillna" is not implemented.')
 
-    xtrain = feature_engineer(df[df['Year'] < val_year])
-    xtrain = xtrain.dropna(subset=['mean_yield'])
-
-    xval = feature_engineer(df[df['Year'] == val_year])
-    xval = xval.dropna(subset=['mean_yield'])
+    xtrain = df[df['Year'] < val_year].dropna(subset=['Yield_Mg_ha'])
+    xval = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
     
-    ytrain = xtrain['mean_yield']
-    yval = xval['mean_yield']
-
-    # drop targets
-    del xtrain['mean_yield'], xval['mean_yield']
-
-    return xtrain, xval, ytrain, yval
+    return xtrain, xval
