@@ -7,6 +7,7 @@ from preprocessing import (
     process_test_data,
     split_trait_data,
     feature_engineer,
+    feat_eng_weather,
     extract_target
 )
 
@@ -38,10 +39,21 @@ if __name__ == '__main__':
     # split train/val
     xtrain, xval = split_trait_data(trait, val_year=VAL_YEAR, fillna=False)
 
-    # feat engineer
+    # feat eng (trait)
     xtrain = feature_engineer(xtrain)
     xval = feature_engineer(xval)
     xtest = feature_engineer(xtest)
+
+    # WEATHER
+    weather = pd.read_csv('data/Training_Data/4_Training_Weather_Data_2014_2021.csv')
+    weather_test = pd.read_csv('data/Testing_Data/4_Testing_Weather_Data_2022.csv')
+
+    # feat eng (weather)
+    xtrain = xtrain.merge(feat_eng_weather(weather), on='Env', how='left')
+    xval = xval.merge(feat_eng_weather(weather), on='Env', how='left')
+    xtest = xtest.merge(feat_eng_weather(weather_test), on='Env', how='left')
+
+    print(xtrain.corr())
     
     # extract targets
     ytrain = extract_target(xtrain)
@@ -52,6 +64,13 @@ if __name__ == '__main__':
     print(xval.isnull().sum() / len(xval))
     print(xtest.isnull().sum() / len(xtest))
 
+    # NA imputing
+    for col in xtrain.columns:
+        filler = xtrain[col].mean()
+        xtrain[col].fillna(filler, inplace=True)
+        xval[col].fillna(filler, inplace=True)
+        xtest[col].fillna(filler, inplace=True)
+
     print('xtrain shape:', xtrain.shape)
     print('xval shape:', xval.shape)
     print('xtest shape:', xtest.shape)
@@ -61,10 +80,8 @@ if __name__ == '__main__':
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
     # train model
-    model = ensemble.HistGradientBoostingRegressor(
-        random_state=42,
-        max_depth=2
-    )
+    model = linear_model.LinearRegression()
+    # model = ensemble.HistGradientBoostingRegressor(random_state=42, max_depth=2)
     model.fit(xtrain, ytrain)
 
     # predict
@@ -72,7 +89,7 @@ if __name__ == '__main__':
     df_eval = pd.DataFrame({
         'Field_Location': yval.index.get_level_values(0).str.replace('(_).*', '', regex=True),
         'Env': yval.index.get_level_values(0),
-        'Hybrid': yval.index.get_level_values(1),
+        # 'Hybrid': yval.index.get_level_values(1),
         'ytrue': yval.values,
         'yhat': yhat
     })
@@ -90,6 +107,7 @@ if __name__ == '__main__':
     # observed X predicted statistics
     obs_vs_pred = pd.concat([
         df_eval['ytrue'].rename('observed').describe(),
-        pd.DataFrame(model.predict(xtest), columns=['predicted']).describe()
+        df_eval['yhat'].rename('validation').describe(),
+        pd.DataFrame(model.predict(xtest), columns=['test']).describe()
     ], axis=1)
     print(obs_vs_pred)

@@ -32,6 +32,21 @@ def feature_engineer(df):
     return df_agg
 
 
+def feat_eng_weather(df):
+    df = df.dropna(subset=[x for x in df.columns if x not in ['Env', 'Date']])
+    df_agg = (
+        df
+        .groupby('Env')
+        .agg(
+            T2M_max=('T2M', 'max'),
+            RH2M_max=('RH2M', 'max'),
+            PRECTOTCORR_max=('PRECTOTCORR', 'max'),
+            ALLSKY_SFC_PAR_TOT_max=('ALLSKY_SFC_PAR_TOT', 'max')
+        )
+    )
+    return df_agg
+
+
 def extract_target(df):
     y = df['Yield_Mg_ha']
     del df['Yield_Mg_ha']
