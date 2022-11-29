@@ -9,7 +9,6 @@ from preprocessing import (
     split_trait_data,
     feature_engineer,
     feat_eng_weather,
-    feat_eng_ec,
     extract_target
 )
 
@@ -61,12 +60,9 @@ if __name__ == '__main__':
     xtest = xtest.merge(feat_eng_weather(weather_test), on='Env', how='left')
 
     # feat eng (EC)
-    xtrain_ec = feat_eng_ec(ec)
-    xtrain_ec = xtrain_ec[xtrain_ec.index.isin(xtrain.index)]
-    xval_ec = feat_eng_ec(ec)
-    xval_ec = xval_ec[xval_ec.index.isin(xval.index)]
-    xtest_ec = feat_eng_ec(ec_test)
-    xtest_ec = xtest_ec[xtest_ec.index.isin(xtest.index)]
+    xtrain_ec = ec[ec.index.isin(xtrain.index)].copy()
+    xval_ec = ec[ec.index.isin(xval.index)].copy()
+    xtest_ec = ec_test[ec_test.index.isin(xtest.index)].copy()
 
     # TODO: try other dim reduction methods
     n_components = 15

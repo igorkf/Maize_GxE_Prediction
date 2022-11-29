@@ -44,16 +44,6 @@ def feat_eng_weather(df):
     return df_agg
 
 
-def feat_eng_ec(df):
-    df_agg = (
-        df
-        .groupby('Env')
-        .agg('mean')
-    )
-    df_agg.columns = [f'{x}_mean' for x in df_agg.columns]
-    return df_agg
-
-
 # def feat_eng_target(df, ref_year, lag):
 #     assert lag >= 1
 #     df_year = df[df['Year'] <= ref_year - lag]
