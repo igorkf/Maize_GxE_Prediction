@@ -1,9 +1,6 @@
 import pandas as pd
 
 
-FEATURES = ['weather_station_lat', 'weather_station_lon']
-
-
 def process_metadata(path: str, encoding: str = 'latin-1'):
     df = pd.read_csv(path, encoding=encoding)
     df['City'] = df['City'].str.strip().replace({'College Station, Texas': 'College Station'})
@@ -47,6 +44,29 @@ def feat_eng_weather(df):
     return df_agg
 
 
+def feat_eng_ec(df):
+    df_agg = (
+        df
+        .groupby('Env')
+        .agg('mean')
+    )
+    df_agg.columns = [f'{x}_mean' for x in df_agg.columns]
+    return df_agg
+
+
+# def feat_eng_target(df, ref_year, lag):
+#     assert lag >= 1
+#     df_year = df[df['Year'] <= ref_year - lag]
+#     series = (
+#         df_year
+#         .groupby('Field_Location')
+#         .agg(
+#             **{f'last_yield_lag_{lag}': ('Yield_Mg_ha', 'last')}
+#         )
+#     )
+#     return series
+
+
 def extract_target(df):
     y = df['Yield_Mg_ha']
     del df['Yield_Mg_ha']
@@ -62,7 +82,7 @@ def split_trait_data(df, val_year: int, fillna: bool = False):
     if fillna:
         raise NotImplementedError('"fillna" is not implemented.')
 
-    xtrain = df[df['Year'] < val_year].dropna(subset=['Yield_Mg_ha'])
+    xtrain = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
     xval = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
     
     return xtrain, xval
