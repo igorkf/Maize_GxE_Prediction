@@ -33,7 +33,8 @@ if __name__ == '__main__':
     # TEST
     test = process_test_data(TEST_PATH)
     xtest = test.merge(meta_test[META_COLS], on='Env', how='left').set_index(['Env', 'Hybrid']).drop(['Field_Location'], axis=1)
-    
+    df_sub = xtest.reset_index()[['Env', 'Hybrid']]
+
     # TRAIT
     trait = pd.read_csv(TRAIT_PATH)
     trait = trait.merge(meta[META_COLS], on='Env', how='left')
@@ -136,6 +137,10 @@ if __name__ == '__main__':
         'yhat': yhat
     })
     df_eval.to_csv('output/oof_solution.csv', index=False)
+
+    # predict on test
+    df_sub['Yield_Mg_ha'] = model.predict(xtest)
+    df_sub.to_csv('output/submission.csv', index=False)
     
     # evaluate
     rmse_per_field = df_eval.groupby('Field_Location').apply(
@@ -150,6 +155,6 @@ if __name__ == '__main__':
     obs_vs_pred = pd.concat([
         df_eval['ytrue'].rename('observed').describe(),
         df_eval['yhat'].rename('validation').describe(),
-        pd.DataFrame(model.predict(xtest), columns=['test']).describe()
+        df_sub['Yield_Mg_ha'].rename('test').describe()
     ], axis=1)
     print(obs_vs_pred)
