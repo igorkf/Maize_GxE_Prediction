@@ -30,31 +30,64 @@ def feature_engineer(df):
 
 
 def feat_eng_weather(df):
-    df = df.dropna(subset=[x for x in df.columns if x not in ['Env', 'Date']])
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
+    df['month'] = df['Date'].dt.month 
+    df['season'] = df['month'] % 12 // 3 + 1  # https://stackoverflow.com/a/44124490/11122513
+    df['season'] = df['season'].map({1: 'winter', 2: 'spring', 3: 'summer', 4: 'fall'})
+    df_agg = df.dropna(subset=[x for x in df.columns if x not in ['Env', 'Date']]).copy()
+    df_agg = (
+        df
+        .groupby(['Env', 'season'])
+        .agg(
+            T2M_max=('T2M', 'max'),
+            T2M_min=('T2M', 'min'),
+            T2M_std=('T2M', 'std'),
+
+            T2M_MIN_max=('T2M_MIN', 'max'),
+            T2M_MIN_std=('T2M_MIN', 'std'),
+
+            WS2M_max=('WS2M', 'max'),
+
+            RH2M_max=('RH2M', 'max'),
+
+            QV2M_mean=('QV2M', 'mean'),
+
+            PRECTOTCORR_max=('PRECTOTCORR', 'max'),
+            PRECTOTCORR_median=('PRECTOTCORR', 'median'),
+
+            ALLSKY_SFC_PAR_TOT_std=('ALLSKY_SFC_PAR_TOT', 'std'),
+
+        )
+        .reset_index()
+        .pivot('Env', 'season')
+    )
+    df_agg.columns = ['_'.join(col) for col in df_agg.columns]
+    return df_agg
+
+
+def feat_eng_soil(df):
     df_agg = (
         df
         .groupby('Env')
         .agg(
-            T2M_max=('T2M', 'max'),
-            RH2M_max=('RH2M', 'max'),
-            PRECTOTCORR_max=('PRECTOTCORR', 'max'),
-            ALLSKY_SFC_PAR_TOT_max=('ALLSKY_SFC_PAR_TOT', 'max')
+            Nitrate_N_ppm_N=('Nitrate-N ppm N', 'mean')
         )
     )
     return df_agg
 
 
-# def feat_eng_target(df, ref_year, lag):
-#     assert lag >= 1
-#     df_year = df[df['Year'] <= ref_year - lag]
-#     series = (
-#         df_year
-#         .groupby('Field_Location')
-#         .agg(
-#             **{f'last_yield_lag_{lag}': ('Yield_Mg_ha', 'last')}
-#         )
-#     )
-#     return series
+def feat_eng_target(df, ref_year, lag):
+    assert lag >= 1
+    df_year = df[df['Year'] <= ref_year - lag]
+    df_agg = (
+        df_year
+        .groupby('Field_Location')
+        .agg(
+            **{f'mean_yield_lag_{lag}': ('Yield_Mg_ha', 'mean')},
+            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')}
+        )
+    )
+    return df_agg
 
 
 def extract_target(df):
@@ -72,7 +105,7 @@ def split_trait_data(df, val_year: int, fillna: bool = False):
     if fillna:
         raise NotImplementedError('"fillna" is not implemented.')
 
-    xtrain = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
-    xval = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
+    train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
+    val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
     
-    return xtrain, xval
+    return train, val
