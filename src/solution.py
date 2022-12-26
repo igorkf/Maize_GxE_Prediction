@@ -1,7 +1,7 @@
 import pandas as pd
-from sklearn import linear_model
-from sklearn import ensemble
 from sklearn.decomposition import TruncatedSVD
+import lightgbm as lgbm
+from sklearn.metrics import r2_score
 
 from preprocessing import (
     process_metadata,
@@ -9,6 +9,8 @@ from preprocessing import (
     split_trait_data,
     feature_engineer,
     feat_eng_weather,
+    feat_eng_soil,
+    feat_eng_target,
     extract_target
 )
 
@@ -43,6 +45,10 @@ if __name__ == '__main__':
     weather = pd.read_csv('data/Training_Data/4_Training_Weather_Data_2014_2021.csv')
     weather_test = pd.read_csv('data/Testing_Data/4_Testing_Weather_Data_2022.csv')
 
+    # SOIL
+    soil = pd.read_csv('data/Training_Data/3_Training_Soil_Data_2015_2021.csv')
+    soil_test = pd.read_csv('data/Testing_Data/3_Testing_Soil_Data_2022.csv')
+
     # EC
     ec = pd.read_csv('data/Training_Data/6_Training_EC_Data_2014_2021.csv').set_index('Env')
     ec_test = pd.read_csv('data/Testing_Data/6_Testing_EC_Data_2022.csv').set_index('Env')
@@ -59,6 +65,11 @@ if __name__ == '__main__':
     xtrain = xtrain.merge(feat_eng_weather(weather), on='Env', how='left')
     xval = xval.merge(feat_eng_weather(weather), on='Env', how='left')
     xtest = xtest.merge(feat_eng_weather(weather_test), on='Env', how='left')
+
+    # feat eng (soil)
+    xtrain = xtrain.merge(feat_eng_soil(soil), on='Env', how='left')
+    xval = xval.merge(feat_eng_soil(soil), on='Env', how='left')
+    xtest = xtest.merge(feat_eng_soil(soil_test), on='Env', how='left')
 
     # feat eng (EC)
     xtrain_ec = ec[ec.index.isin(xtrain.index)].copy()
@@ -82,13 +93,13 @@ if __name__ == '__main__':
     xtest = xtest.merge(xtest_ec, on='Env', how='left')
 
     # feat eng (target)
-    # xtrain['Field_Location'] = xtrain.index.get_level_values(0).str.replace('(_).*', '', regex=True)
-    # xval['Field_Location'] = xval.index.get_level_values(0).str.replace('(_).*', '', regex=True)
-    # xtest['Field_Location'] = xtest.index.get_level_values(0).str.replace('(_).*', '', regex=True)
-    # xtrain = xtrain.merge(feat_eng_target(trait, ref_year=YTRAIN_YEAR, lag=1), on='Field_Location', how='left').set_index(xtrain.index)
-    # xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=1), on='Field_Location', how='left').set_index(xval.index)
-    # xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=1), on='Field_Location', how='left').set_index(xtest.index)
-    # del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
+    xtrain['Field_Location'] = xtrain.index.get_level_values(0).str.replace('(_).*', '', regex=True)
+    xval['Field_Location'] = xval.index.get_level_values(0).str.replace('(_).*', '', regex=True)
+    xtest['Field_Location'] = xtest.index.get_level_values(0).str.replace('(_).*', '', regex=True)
+    xtrain = xtrain.merge(feat_eng_target(trait, ref_year=YTRAIN_YEAR, lag=2), on='Field_Location', how='left').set_index(xtrain.index)
+    xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=2), on='Field_Location', how='left').set_index(xval.index)
+    xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left').set_index(xtest.index)
+    del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
 
     print(xtrain.corr())
     
@@ -105,14 +116,9 @@ if __name__ == '__main__':
     for col in xtrain.columns:
         mean = xtrain[col].mean()
         std = xtrain[col].std()
-
         xtrain[col].fillna(mean, inplace=True)
         xval[col].fillna(mean, inplace=True)
         xtest[col].fillna(mean, inplace=True)
-
-        # xtrain[col] = (xtrain[col] - mean) / std
-        # xval[col] = (xval[col] - mean) / std
-        # xtest[col] = (xtest[col] - mean) / std
 
     print('xtrain shape:', xtrain.shape)
     print('xval shape:', xval.shape)
@@ -122,9 +128,13 @@ if __name__ == '__main__':
     print('ytrain nulls:', ytrain.isnull().sum() / len(ytrain))
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
+
     # train model
     # model = linear_model.LinearRegression()
-    model = ensemble.HistGradientBoostingRegressor(random_state=42, max_depth=2)
+    model = lgbm.LGBMRegressor(
+        random_state=42, 
+        max_depth=2
+    )
     model.fit(xtrain, ytrain)
 
     # predict
@@ -136,11 +146,11 @@ if __name__ == '__main__':
         'ytrue': yval.values,
         'yhat': yhat
     })
-    df_eval.to_csv('output/oof_solution.csv', index=False)
+    df_eval.to_csv('output/oof_solution_2nd_sub.csv', index=False)
 
     # predict on test
     df_sub['Yield_Mg_ha'] = model.predict(xtest)
-    df_sub.to_csv('output/submission.csv', index=False)
+    df_sub.to_csv('output/submission_2nd_sub.csv', index=False)
     
     # evaluate
     rmse_per_field = df_eval.groupby('Field_Location').apply(
@@ -150,11 +160,14 @@ if __name__ == '__main__':
     print(rmse_per_field)
     print('RMSE (per location):\n', rmse_per_field.describe().to_frame('   ').T)
     print('RMSE:', rmse)
+    r2 = r2_score(df_eval['ytrue'], df_eval['yhat'])
+    adj_r2 = 1 - (1 - r2) * (len(df_eval) - 1) / (len(df_eval) - df_eval.shape[1] - 1)
+    print('Adj. R2:', adj_r2)
 
     # observed X predicted statistics
     obs_vs_pred = pd.concat([
         df_eval['ytrue'].rename('observed').describe(),
-        df_eval['yhat'].rename('validation').describe(),
-        df_sub['Yield_Mg_ha'].rename('test').describe()
+        df_eval['yhat'].rename('predicted').describe(),
+        df_sub['Yield_Mg_ha'].rename('submission').describe()
     ], axis=1)
     print(obs_vs_pred)
