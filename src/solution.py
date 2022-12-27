@@ -80,6 +80,8 @@ if __name__ == '__main__':
         pd.read_csv('output/variants_vs_samples_GT_pos0.csv').T,
         pd.read_csv('output/variants_vs_samples_GT_pos1.csv').T
     ], axis=1)
+    print('min:', samples_variants.min().min())
+    print('max:', samples_variants.max().max())
     samples_variants.columns = [str(i) for i in range(samples_variants.shape[1])]
     xtrain_geno = samples_variants[samples_variants.index.isin(xtrain.index.get_level_values(1))]
     xval_geno = samples_variants[samples_variants.index.isin(xval.index.get_level_values(1))]
@@ -172,7 +174,7 @@ if __name__ == '__main__':
     model = lgbm.LGBMRegressor(
         random_state=42, 
         max_depth=2
-    )  # RMSE=2.1513595743940024
+    )  # RMSE=2.1479212182847944
     model.fit(xtrain, ytrain)
 
     # predict

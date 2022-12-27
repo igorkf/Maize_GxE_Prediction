@@ -27,13 +27,11 @@ if __name__ == '__main__':
     (
         pd.DataFrame(gt.values[:, :, 0], columns=samples)
         .sample(frac=0.10, random_state=42)
-        .astype('uint8')
         .to_csv('output/variants_vs_samples_GT_pos0.csv', index=False)
     )
     (
         pd.DataFrame(gt.values[:, :, 1], columns=samples)
         .sample(frac=0.10, random_state=42)
-        .astype('uint8')
         .to_csv('output/variants_vs_samples_GT_pos1.csv', index=False)
     )
 
