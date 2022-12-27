@@ -85,7 +85,7 @@ if __name__ == '__main__':
     xval_geno = samples_variants[samples_variants.index.isin(xval.index.get_level_values(1))]
     xtest_geno = samples_variants[samples_variants.index.isin(xtest.index.get_level_values(1))]
 
-    n_components = 80
+    n_components = 200
     svd1 = TruncatedSVD(n_components=n_components, n_iter=20, random_state=42)
     svd1.fit(xtrain_geno.values)
     print('SVD explained variance:', svd1.explained_variance_ratio_.sum())
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     model = lgbm.LGBMRegressor(
         random_state=42, 
         max_depth=2
-    )  # RMSE=2.1555553016785165
+    )  # RMSE=2.152525179442162
     model.fit(xtrain, ytrain)
 
     # predict
