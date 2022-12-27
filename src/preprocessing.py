@@ -3,11 +3,18 @@ import pandas as pd
 
 def process_metadata(path: str, encoding: str = 'latin-1'):
     df = pd.read_csv(path, encoding=encoding)
-    df['City'] = df['City'].str.strip().replace({'College Station, Texas': 'College Station'})
     df = df.rename(columns={
         'Weather_Station_Latitude (in decimal numbers NOT DMS)': 'weather_station_lat',
         'Weather_Station_Longitude (in decimal numbers NOT DMS)': 'weather_station_lon'
     })
+    df['Env'] = df['Env'].str.replace('-(.*)', '', regex=True)
+    df['City'] = df['City'].str.strip().replace({'College Station, Texas': 'College Station'})
+    df['treatment_not_standard'] = (df['Treatment'] != 'Standard').astype('int')
+
+    # if 'Date_Planted' in df.columns:
+    #     df['Date_Planted'] = pd.to_datetime(df['Date_Planted'])
+    #     df['month_planted'] = df['Date_Planted'].dt.month 
+    #     df['season_planted'] = df['month_planted'] % 12 // 3 + 1  # https://stackoverflow.com/a/44124490/11122513
     return df
 
 
@@ -17,13 +24,27 @@ def process_test_data(path: str):
     return df
 
 
+def process_trait_data(path: str):
+    df = pd.read_csv(path)
+    # df['Date_Planted'] = pd.to_datetime(df['Date_Planted'])
+    # df['month_planted'] = df['Date_Planted'].dt.month 
+    # df['season_planted'] = df['month_planted'] % 12 // 3 + 1  # https://stackoverflow.com/a/44124490/11122513
+    return df
+
+
+def process_soil_data(path: str):
+    df = pd.read_csv(path)
+    return df
+
+
 def feature_engineer(df):
     df_agg = (
         df
         .groupby(['Env', 'Hybrid']).agg(
             weather_station_lat=('weather_station_lat', 'mean'),
             weather_station_lon=('weather_station_lon', 'mean'),
-            Yield_Mg_ha=('Yield_Mg_ha', 'mean')
+            treatment_not_standard=('treatment_not_standard', 'mean'),
+            Yield_Mg_ha=('Yield_Mg_ha', 'mean')  # target
         )
     )
     return df_agg
@@ -70,7 +91,10 @@ def feat_eng_soil(df):
         df
         .groupby('Env')
         .agg(
-            Nitrate_N_ppm_N=('Nitrate-N ppm N', 'mean')
+            Nitrate_N_ppm_N=('Nitrate-N ppm N', 'mean'),
+            percentage_Sand=('% Sand', 'mean'),
+            lbs_N_A=('lbs N/A', 'mean'),
+            percentage_Ca_Sat=('%Ca Sat', 'mean')
         )
     )
     return df_agg

@@ -6,6 +6,8 @@ from sklearn.metrics import r2_score
 from preprocessing import (
     process_metadata,
     process_test_data,
+    process_trait_data,
+    process_soil_data,
     split_trait_data,
     feature_engineer,
     feat_eng_weather,
@@ -13,6 +15,7 @@ from preprocessing import (
     feat_eng_target,
     extract_target
 )
+
 
 YTRAIN_YEAR = 2020
 YVAL_YEAR = 2021
@@ -23,7 +26,10 @@ TEST_PATH = 'data/Testing_Data/1_Submission_Template_2022.csv'
 META_TRAIN_PATH = 'data/Training_Data/2_Training_Meta_Data_2014_2021.csv'
 META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 
-META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon']
+META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
+META_COLS_TEST = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
+GENO_COLS = ['Hybrid', 'count_het', 'count_hom', 'GT_pos1_mean', 'GT_pos0_max']
+CAT_COLS = []  # to avoid mean imputation
 
 
 if __name__ == '__main__':
@@ -34,11 +40,11 @@ if __name__ == '__main__':
 
     # TEST
     test = process_test_data(TEST_PATH)
-    xtest = test.merge(meta_test[META_COLS], on='Env', how='left').set_index(['Env', 'Hybrid']).drop(['Field_Location'], axis=1)
+    xtest = test.merge(meta_test[META_COLS_TEST], on='Env', how='left').set_index(['Env', 'Hybrid']).drop(['Field_Location'], axis=1)
     df_sub = xtest.reset_index()[['Env', 'Hybrid']]
 
     # TRAIT
-    trait = pd.read_csv(TRAIT_PATH)
+    trait = process_trait_data(TRAIT_PATH)
     trait = trait.merge(meta[META_COLS], on='Env', how='left')
 
     # WEATHER
@@ -46,8 +52,8 @@ if __name__ == '__main__':
     weather_test = pd.read_csv('data/Testing_Data/4_Testing_Weather_Data_2022.csv')
 
     # SOIL
-    soil = pd.read_csv('data/Training_Data/3_Training_Soil_Data_2015_2021.csv')
-    soil_test = pd.read_csv('data/Testing_Data/3_Testing_Soil_Data_2022.csv')
+    soil = process_soil_data('data/Training_Data/3_Training_Soil_Data_2015_2021.csv')
+    soil_test = process_soil_data('data/Testing_Data/3_Testing_Soil_Data_2022.csv')
 
     # EC
     ec = pd.read_csv('data/Training_Data/6_Training_EC_Data_2014_2021.csv').set_index('Env')
@@ -60,6 +66,13 @@ if __name__ == '__main__':
     xtrain = feature_engineer(xtrain)
     xval = feature_engineer(xval)
     xtest = feature_engineer(xtest)
+
+    # feat eng (geno)
+    geno = pd.read_csv('output/geno_features.csv', usecols=GENO_COLS)
+    xtrain = xtrain.merge(geno, on='Hybrid', how='left').set_index(xtrain.index)
+    xval = xval.merge(geno, on='Hybrid', how='left').set_index(xval.index)
+    xtest = xtest.merge(geno, on='Hybrid', how='left').set_index(xtest.index)
+    del xtrain['Hybrid'], xval['Hybrid'], xtest['Hybrid']
 
     # feat eng (weather)
     xtrain = xtrain.merge(feat_eng_weather(weather), on='Env', how='left')
@@ -101,8 +114,7 @@ if __name__ == '__main__':
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left').set_index(xtest.index)
     del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
 
-    print(xtrain.corr())
-    
+
     # extract targets
     ytrain = extract_target(xtrain)
     yval = extract_target(xval)
@@ -113,7 +125,7 @@ if __name__ == '__main__':
     print(xtest.isnull().sum() / len(xtest))
 
     # NA imputing
-    for col in xtrain.columns:
+    for col in [x for x in xtrain.columns if x not in CAT_COLS]:
         mean = xtrain[col].mean()
         std = xtrain[col].std()
         xtrain[col].fillna(mean, inplace=True)
@@ -128,13 +140,10 @@ if __name__ == '__main__':
     print('ytrain nulls:', ytrain.isnull().sum() / len(ytrain))
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
-
-    # train model
-    # model = linear_model.LinearRegression()
     model = lgbm.LGBMRegressor(
         random_state=42, 
         max_depth=2
-    )
+    )  # RMSE=2.166980134845591
     model.fit(xtrain, ytrain)
 
     # predict
@@ -146,11 +155,11 @@ if __name__ == '__main__':
         'ytrue': yval.values,
         'yhat': yhat
     })
-    df_eval.to_csv('output/oof_solution_2nd_sub.csv', index=False)
+    df_eval.to_csv('output/oof_solution_3rd_sub.csv', index=False)
 
     # predict on test
     df_sub['Yield_Mg_ha'] = model.predict(xtest)
-    df_sub.to_csv('output/submission_2nd_sub.csv', index=False)
+    df_sub.to_csv('output/submission_3rd_sub.csv', index=False)
     
     # evaluate
     rmse_per_field = df_eval.groupby('Field_Location').apply(
