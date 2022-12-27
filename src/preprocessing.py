@@ -9,7 +9,7 @@ def process_metadata(path: str, encoding: str = 'latin-1'):
     })
     df['Env'] = df['Env'].str.replace('-(.*)', '', regex=True)
     df['City'] = df['City'].str.strip().replace({'College Station, Texas': 'College Station'})
-    df['treatment_not_standard'] = (df['Treatment'] != 'Standard').astype('int')
+    df['treatment_not_standard'] = (df['Treatment'].str.contains('Standard') == False).astype('int')
 
     # if 'Date_Planted' in df.columns:
     #     df['Date_Planted'] = pd.to_datetime(df['Date_Planted'])

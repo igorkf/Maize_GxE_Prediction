@@ -172,7 +172,7 @@ if __name__ == '__main__':
     model = lgbm.LGBMRegressor(
         random_state=42, 
         max_depth=2
-    )  # RMSE=2.152525179442162
+    )  # RMSE=2.1513595743940024
     model.fit(xtrain, ytrain)
 
     # predict
