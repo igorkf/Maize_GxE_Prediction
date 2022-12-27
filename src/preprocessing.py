@@ -37,6 +37,18 @@ def process_soil_data(path: str):
     return df
 
 
+def process_ec_data(path: str):
+    null_std_cols = [
+        'yield_pGerEme', 'yield_pEmeEnJ', 'yield_pEnJFlo', 'yield_pFloFla', 
+        'Flux_pStGEnG_6', 'Flux_pEnGMat_6', 'Flux_pStGEnG_7', 'Flux_pEnGMat_7', 
+        'Flux_pMatHar_7', 'Flux_pEnGMat_8', 'Flux_pMatHar_8'
+    ]
+    df = pd.read_csv(path)
+    df = df.set_index('Env')
+    df = df.drop(null_std_cols, axis=1, errors='ignore')
+    return df
+
+
 def feature_engineer(df):
     df_agg = (
         df

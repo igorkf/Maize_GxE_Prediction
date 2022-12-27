@@ -8,6 +8,7 @@ from preprocessing import (
     process_test_data,
     process_trait_data,
     process_soil_data,
+    process_ec_data,
     split_trait_data,
     feature_engineer,
     feat_eng_weather,
@@ -56,8 +57,8 @@ if __name__ == '__main__':
     soil_test = process_soil_data('data/Testing_Data/3_Testing_Soil_Data_2022.csv')
 
     # EC
-    ec = pd.read_csv('data/Training_Data/6_Training_EC_Data_2014_2021.csv').set_index('Env')
-    ec_test = pd.read_csv('data/Testing_Data/6_Testing_EC_Data_2022.csv').set_index('Env')
+    ec = process_ec_data('data/Training_Data/6_Training_EC_Data_2014_2021.csv')
+    ec_test = process_ec_data('data/Testing_Data/6_Testing_EC_Data_2022.csv')
 
     # split train/val
     xtrain, xval = split_trait_data(trait, val_year=YVAL_YEAR, fillna=False)
@@ -72,6 +73,36 @@ if __name__ == '__main__':
     xtrain = xtrain.merge(geno, on='Hybrid', how='left').set_index(xtrain.index)
     xval = xval.merge(geno, on='Hybrid', how='left').set_index(xval.index)
     xtest = xtest.merge(geno, on='Hybrid', how='left').set_index(xtest.index)
+    del xtrain['Hybrid'], xval['Hybrid'], xtest['Hybrid']
+
+    # feat end (geno 2)
+    samples_variants = pd.concat([
+        pd.read_csv('output/variants_vs_samples_GT_pos0.csv').T,
+        pd.read_csv('output/variants_vs_samples_GT_pos1.csv').T
+    ], axis=1)
+    samples_variants.columns = [str(i) for i in range(samples_variants.shape[1])]
+    xtrain_geno = samples_variants[samples_variants.index.isin(xtrain.index.get_level_values(1))]
+    xval_geno = samples_variants[samples_variants.index.isin(xval.index.get_level_values(1))]
+    xtest_geno = samples_variants[samples_variants.index.isin(xtest.index.get_level_values(1))]
+
+    n_components = 80
+    svd1 = TruncatedSVD(n_components=n_components, n_iter=20, random_state=42)
+    svd1.fit(xtrain_geno.values)
+    print('SVD explained variance:', svd1.explained_variance_ratio_.sum())
+
+    xtrain_geno = pd.DataFrame(svd1.transform(xtrain_geno), index=xtrain_geno.index)
+    component_cols = [f'geno_svd_comp{i}' for i in range(xtrain_geno.shape[1])]
+    xtrain_geno.columns = component_cols
+    xval_geno = pd.DataFrame(svd1.transform(xval_geno), columns=component_cols, index=xval_geno.index)
+    xtest_geno = pd.DataFrame(svd1.transform(xtest_geno), columns=component_cols, index=xtest_geno.index)
+
+    xtrain_geno = xtrain_geno.reset_index().rename(columns={'index': 'Hybrid'})
+    xval_geno = xval_geno.reset_index().rename(columns={'index': 'Hybrid'})
+    xtest_geno = xtest_geno.reset_index().rename(columns={'index': 'Hybrid'})
+
+    xtrain = xtrain.merge(xtrain_geno, on='Hybrid', how='left').set_index(xtrain.index.get_level_values(0))
+    xval = xval.merge(xval_geno, on='Hybrid', how='left').set_index(xval.index.get_level_values(0))
+    xtest = xtest.merge(xtest_geno, on='Hybrid', how='left').set_index(xtest.index.get_level_values(0))
     del xtrain['Hybrid'], xval['Hybrid'], xtest['Hybrid']
 
     # feat eng (weather)
@@ -89,14 +120,13 @@ if __name__ == '__main__':
     xval_ec = ec[ec.index.isin(xval.index)].copy()
     xtest_ec = ec_test[ec_test.index.isin(xtest.index)].copy()
 
-    # TODO: try other dim reduction methods
     n_components = 15
     svd = TruncatedSVD(n_components=n_components, n_iter=20, random_state=42)
     svd.fit(xtrain_ec.values)
     print('SVD explained variance:', svd.explained_variance_ratio_.sum())
 
     xtrain_ec = pd.DataFrame(svd.transform(xtrain_ec), index=xtrain_ec.index)
-    component_cols = [f"EC_svd_comp{i}" for i in range(xtrain_ec.shape[1])]
+    component_cols = [f'EC_svd_comp{i}' for i in range(xtrain_ec.shape[1])]
     xtrain_ec.columns = component_cols
     xval_ec = pd.DataFrame(svd.transform(xval_ec), columns=component_cols, index=xval_ec.index)
     xtest_ec = pd.DataFrame(svd.transform(xtest_ec), columns=component_cols, index=xtest_ec.index)
@@ -113,7 +143,6 @@ if __name__ == '__main__':
     xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=2), on='Field_Location', how='left').set_index(xval.index)
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left').set_index(xtest.index)
     del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
-
 
     # extract targets
     ytrain = extract_target(xtrain)
@@ -143,7 +172,7 @@ if __name__ == '__main__':
     model = lgbm.LGBMRegressor(
         random_state=42, 
         max_depth=2
-    )  # RMSE=2.166980134845591
+    )  # RMSE=2.1555553016785165
     model.fit(xtrain, ytrain)
 
     # predict
