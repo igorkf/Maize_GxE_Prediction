@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import MiniBatchSparsePCA, TruncatedSVD 
 import lightgbm as lgbm
 from sklearn.metrics import r2_score
 
@@ -88,15 +88,15 @@ if __name__ == '__main__':
     xtest_geno = samples_variants[samples_variants.index.isin(xtest.index.get_level_values(1))]
 
     n_components = 200
-    svd1 = TruncatedSVD(n_components=n_components, n_iter=20, random_state=42)
-    svd1.fit(xtrain_geno.values)
-    print('SVD explained variance:', svd1.explained_variance_ratio_.sum())
+    mbspca = MiniBatchSparsePCA(n_components=n_components, random_state=42)
+    mbspca.fit(xtrain_geno.values)
+    print('Sparsity:', sum([x == 0 for x in mbspca.components_]) / len(mbspca.components_))
 
-    xtrain_geno = pd.DataFrame(svd1.transform(xtrain_geno), index=xtrain_geno.index)
+    xtrain_geno = pd.DataFrame(mbspca.transform(xtrain_geno), index=xtrain_geno.index)
     component_cols = [f'geno_svd_comp{i}' for i in range(xtrain_geno.shape[1])]
     xtrain_geno.columns = component_cols
-    xval_geno = pd.DataFrame(svd1.transform(xval_geno), columns=component_cols, index=xval_geno.index)
-    xtest_geno = pd.DataFrame(svd1.transform(xtest_geno), columns=component_cols, index=xtest_geno.index)
+    xval_geno = pd.DataFrame(mbspca.transform(xval_geno), columns=component_cols, index=xval_geno.index)
+    xtest_geno = pd.DataFrame(mbspca.transform(xtest_geno), columns=component_cols, index=xtest_geno.index)
 
     xtrain_geno = xtrain_geno.reset_index().rename(columns={'index': 'Hybrid'})
     xval_geno = xval_geno.reset_index().rename(columns={'index': 'Hybrid'})
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     model = lgbm.LGBMRegressor(
         random_state=42, 
         max_depth=2
-    )  # RMSE=2.1479212182847944
+    )  # RMSE=2.1402037474083295
     model.fit(xtrain, ytrain)
 
     # predict
