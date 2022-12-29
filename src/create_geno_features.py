@@ -23,21 +23,11 @@ if __name__ == '__main__':
     df['GT_alt_mean'] = gt.values[:, :, 1].mean(axis=0)  # sum(0/.) / n_variants
     df.to_csv('output/geno_features.csv', index=False)
 
-    # variants VS samples
-    # (
-    #     pd.DataFrame(gt.values[:, :, 0], columns=samples)
-    #     .sample(frac=0.1, random_state=42)
-    #     .to_csv('output/variants_vs_samples_GT_ref.csv', index=False)
-    # )
-    # (
-    #     pd.DataFrame(gt.values[:, :, 1], columns=samples)
-    #     .sample(frac=0.1, random_state=42)
-    #     .to_csv('output/variants_vs_samples_GT_alt.csv', index=False)
-    # )
+    # variants VS samples (sampled)
     (
-        pd.DataFrame(gt.values[:, :, 0] + gt.values[:, :, 1], columns=samples)  # sum
+        pd.DataFrame(gt.values[:, :, 0] + gt.values[:, :, 1], columns=samples)  # ref + alt
         .sample(frac=0.1, random_state=42)
-        .to_csv('output/variants_vs_samples_GT_refXalt.csv', index=False)
+        .to_csv('output/variants_vs_samples_GT_ref_alt.csv', index=False)
     )
 
     end_time = time.perf_counter()

@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 from sklearn.decomposition import MiniBatchSparsePCA, TruncatedSVD 
 import lightgbm as lgbm
@@ -34,6 +36,7 @@ CAT_COLS = []  # to avoid mean imputation
 
 
 if __name__ == '__main__':
+    start_time = time.perf_counter()
 
     # META
     meta = process_metadata(META_TRAIN_PATH)
@@ -76,11 +79,7 @@ if __name__ == '__main__':
     del xtrain['Hybrid'], xval['Hybrid'], xtest['Hybrid']
 
     # feat end (geno 2)
-    samples_variants = pd.concat([
-        # pd.read_csv('output/variants_vs_samples_GT_ref.csv').T,
-        # pd.read_csv('output/variants_vs_samples_GT_alt.csv').T,
-        pd.read_csv('output/variants_vs_samples_GT_refXalt.csv').T
-    ], axis=1)
+    samples_variants = pd.read_csv('output/variants_vs_samples_GT_ref_alt.csv').T  # transpose
     print('min:', samples_variants.min().min())
     print('max:', samples_variants.max().max())
     samples_variants.columns = [str(i) for i in range(samples_variants.shape[1])]
@@ -176,7 +175,7 @@ if __name__ == '__main__':
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
     model = lgbm.LGBMRegressor(
-        random_state=42, 
+        random_state=42,
         max_depth=2
     )  # RMSE=2.1260267389189638
     model.fit(xtrain, ytrain)
@@ -214,4 +213,8 @@ if __name__ == '__main__':
         df_eval['yhat'].rename('predicted').describe(),
         df_sub['Yield_Mg_ha'].rename('submission').describe()
     ], axis=1)
-    print(obs_vs_pred)
+    print(obs_vs_pred, '\n')
+
+    end_time = time.perf_counter()
+    total_time = (end_time - start_time) / 60
+    print('Total minutes:', round(total_time, 2))
