@@ -29,7 +29,7 @@ META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 
 META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
 META_COLS_TEST = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
-GENO_COLS = ['Hybrid', 'count_het', 'count_hom', 'GT_pos1_mean', 'GT_pos0_max']
+GENO_COLS = ['Hybrid', 'GT_count_het', 'GT_count_hom', 'GT_alt_mean', 'GT_ref_max']
 CAT_COLS = []  # to avoid mean imputation
 
 
@@ -77,8 +77,9 @@ if __name__ == '__main__':
 
     # feat end (geno 2)
     samples_variants = pd.concat([
-        pd.read_csv('output/variants_vs_samples_GT_pos0.csv').T,
-        pd.read_csv('output/variants_vs_samples_GT_pos1.csv').T
+        # pd.read_csv('output/variants_vs_samples_GT_ref.csv').T,
+        # pd.read_csv('output/variants_vs_samples_GT_alt.csv').T,
+        pd.read_csv('output/variants_vs_samples_GT_refXalt.csv').T
     ], axis=1)
     print('min:', samples_variants.min().min())
     print('max:', samples_variants.max().max())
@@ -86,11 +87,12 @@ if __name__ == '__main__':
     xtrain_geno = samples_variants[samples_variants.index.isin(xtrain.index.get_level_values(1))]
     xval_geno = samples_variants[samples_variants.index.isin(xval.index.get_level_values(1))]
     xtest_geno = samples_variants[samples_variants.index.isin(xtest.index.get_level_values(1))]
+    del samples_variants
 
     n_components = 200
     mbspca = MiniBatchSparsePCA(n_components=n_components, random_state=42)
     mbspca.fit(xtrain_geno.values)
-    print('Sparsity:', sum([x == 0 for x in mbspca.components_]) / len(mbspca.components_))
+    # print('Sparsity:', sum([x == 0 for x in mbspca.components_]) / len(mbspca.components_))
 
     xtrain_geno = pd.DataFrame(mbspca.transform(xtrain_geno), index=xtrain_geno.index)
     component_cols = [f'geno_svd_comp{i}' for i in range(xtrain_geno.shape[1])]
@@ -111,11 +113,13 @@ if __name__ == '__main__':
     xtrain = xtrain.merge(feat_eng_weather(weather), on='Env', how='left')
     xval = xval.merge(feat_eng_weather(weather), on='Env', how='left')
     xtest = xtest.merge(feat_eng_weather(weather_test), on='Env', how='left')
+    del weather, weather_test
 
     # feat eng (soil)
     xtrain = xtrain.merge(feat_eng_soil(soil), on='Env', how='left')
     xval = xval.merge(feat_eng_soil(soil), on='Env', how='left')
     xtest = xtest.merge(feat_eng_soil(soil_test), on='Env', how='left')
+    del soil, soil_test
 
     # feat eng (EC)
     xtrain_ec = ec[ec.index.isin(xtrain.index)].copy()
@@ -151,9 +155,9 @@ if __name__ == '__main__':
     yval = extract_target(xval)
     _ = extract_target(xtest)
 
-    print(xtrain.isnull().sum() / len(xtrain))
-    print(xval.isnull().sum() / len(xval))
-    print(xtest.isnull().sum() / len(xtest))
+    # print(xtrain.isnull().sum() / len(xtrain))
+    # print(xval.isnull().sum() / len(xval))
+    # print(xtest.isnull().sum() / len(xtest))
 
     # NA imputing
     for col in [x for x in xtrain.columns if x not in CAT_COLS]:
@@ -174,7 +178,7 @@ if __name__ == '__main__':
     model = lgbm.LGBMRegressor(
         random_state=42, 
         max_depth=2
-    )  # RMSE=2.1402037474083295
+    )  # RMSE=2.1260267389189638
     model.fit(xtrain, ytrain)
 
     # predict
