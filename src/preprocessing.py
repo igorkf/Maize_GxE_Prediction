@@ -49,6 +49,27 @@ def process_ec_data(path: str):
     return df
 
 
+def process_agronomic_data():
+    df = []
+    for year in [2019, 2020, 2021]:
+        df_temp = pd.read_csv(f'data/g2f_{year}_agronomic_information.csv')
+        df_temp['Env'] = df_temp['Location'] + '_' + str(year + 1)  # to use in merging
+        df.append(df_temp)
+
+    df = pd.concat(df, ignore_index=True)
+    df = df.rename(columns={'Location': 'Field_Location'})
+    df['Application_or_treatment'] = df['Application_or_treatment'].str.lower().str.strip()
+    df.loc[df['Application_or_treatment'].isin(['fertlizer', 'fertilizer', 'manure fertilizer', 'chemical fertilizer', 'fertigation']), 'Application_or_treatment'] = 'fertilize'
+    df.loc[df['Application_or_treatment'].str.contains('herbicide'), 'Application_or_treatment'] = 'herbicide'
+
+    df['herbicide'] = (df['Application_or_treatment'] == 'herbicide').astype('int')
+    df['fertilize'] = (df['Application_or_treatment'] == 'fertilize').astype('int')
+    df['insecticide_or_fungicide'] = (df['Application_or_treatment'].isin(['insecticide', 'fungicide'])).astype('int')
+    df['irrigation'] = (df['Application_or_treatment'] == 'irrigation').astype('int')
+
+    return df
+
+
 def feature_engineer(df):
     df_agg = (
         df
@@ -107,6 +128,20 @@ def feat_eng_soil(df):
             percentage_Sand=('% Sand', 'mean'),
             lbs_N_A=('lbs N/A', 'mean'),
             percentage_Ca_Sat=('%Ca Sat', 'mean')
+        )
+    )
+    return df_agg
+
+
+def feat_eng_agronomic(df):
+    df_agg = (
+        df
+        .groupby('Env').agg(
+            # TODO: try to add quantity (e.g. in lb)
+            fertilize_previous_year=('fertilize', lambda x: sum(x) / len(x)),
+            herbicide_previous_year=('herbicide', lambda x: sum(x) / len(x)),
+            insecticide_or_fungicide_previous_year=('insecticide_or_fungicide', lambda x: sum(x) / len(x)),
+            irrigation_previous_year=('irrigation', lambda x: sum(x) / len(x))
         )
     )
     return df_agg

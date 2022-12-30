@@ -2,7 +2,7 @@ import time
 
 import pandas as pd
 from sklearn.decomposition import MiniBatchSparsePCA, TruncatedSVD 
-import lightgbm as lgbm
+import xgboost as xgb
 from sklearn.metrics import r2_score
 
 from preprocessing import (
@@ -11,10 +11,12 @@ from preprocessing import (
     process_trait_data,
     process_soil_data,
     process_ec_data,
+    process_agronomic_data,
     split_trait_data,
     feature_engineer,
     feat_eng_weather,
     feat_eng_soil,
+    feat_eng_agronomic,
     feat_eng_target,
     extract_target
 )
@@ -32,6 +34,12 @@ META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
 META_COLS_TEST = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
 GENO_COLS = ['Hybrid', 'GT_count_het', 'GT_count_hom', 'GT_alt_mean', 'GT_ref_max']
+AGRO_COLS = [
+    'fertilize_previous_year',
+    'herbicide_previous_year',
+    'insecticide_or_fungicide_previous_year',
+    'irrigation_previous_year'
+]
 CAT_COLS = []  # to avoid mean imputation
 
 
@@ -63,6 +71,9 @@ if __name__ == '__main__':
     ec = process_ec_data('data/Training_Data/6_Training_EC_Data_2014_2021.csv')
     ec_test = process_ec_data('data/Testing_Data/6_Testing_EC_Data_2022.csv')
 
+    # AGRONOMIC
+    agro = process_agronomic_data()
+
     # split train/val
     xtrain, xval = split_trait_data(trait, val_year=YVAL_YEAR, fillna=False)
 
@@ -83,7 +94,7 @@ if __name__ == '__main__':
     print('min:', samples_variants.min().min())
     print('max:', samples_variants.max().max())
     samples_variants.columns = [str(i) for i in range(samples_variants.shape[1])]
-    xtrain_geno = samples_variants[samples_variants.index.isin(xtrain.index.get_level_values(1))]
+    xtrain_geno = samples_variants[samples_variants.index.isin(xtrain.index.get_level_values(1))]  # hybrids
     xval_geno = samples_variants[samples_variants.index.isin(xval.index.get_level_values(1))]
     xtest_geno = samples_variants[samples_variants.index.isin(xtest.index.get_level_values(1))]
     del samples_variants
@@ -140,6 +151,15 @@ if __name__ == '__main__':
     xval = xval.merge(xval_ec, on='Env', how='left')
     xtest = xtest.merge(xtest_ec, on='Env', how='left')
 
+    # feat eng (agronomic)
+    xtrain = xtrain.merge(feat_eng_agronomic(agro), on='Env', how='left')
+    xval = xval.merge(feat_eng_agronomic(agro), on='Env', how='left')
+    xtest = xtest.merge(feat_eng_agronomic(agro), on='Env', how='left')
+    xtrain[AGRO_COLS] = xtrain[AGRO_COLS].fillna(0)
+    xval[AGRO_COLS] = xval[AGRO_COLS].fillna(0)
+    xtest[AGRO_COLS] = xtest[AGRO_COLS].fillna(0)
+    del agro
+
     # feat eng (target)
     xtrain['Field_Location'] = xtrain.index.get_level_values(0).str.replace('(_).*', '', regex=True)
     xval['Field_Location'] = xval.index.get_level_values(0).str.replace('(_).*', '', regex=True)
@@ -153,10 +173,6 @@ if __name__ == '__main__':
     ytrain = extract_target(xtrain)
     yval = extract_target(xval)
     _ = extract_target(xtest)
-
-    # print(xtrain.isnull().sum() / len(xtrain))
-    # print(xval.isnull().sum() / len(xval))
-    # print(xtest.isnull().sum() / len(xtest))
 
     # NA imputing
     for col in [x for x in xtrain.columns if x not in CAT_COLS]:
@@ -174,10 +190,10 @@ if __name__ == '__main__':
     print('ytrain nulls:', ytrain.isnull().sum() / len(ytrain))
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
-    model = lgbm.LGBMRegressor(
+    model = xgb.XGBRegressor(
         random_state=42,
         max_depth=2
-    )  # RMSE=2.1260267389189638
+    )  # RMSE=2.0989990836404595
     model.fit(xtrain, ytrain)
 
     # predict
