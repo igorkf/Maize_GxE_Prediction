@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # variants VS samples (sampled)
     (
         pd.DataFrame(gt.values[:, :, 0] + gt.values[:, :, 1], columns=samples)  # ref + alt
-        .sample(frac=0.1, random_state=42)
+        .sample(frac=0.15, random_state=42)
         .to_csv('output/variants_vs_samples_GT_ref_alt.csv', index=False)
     )
 
