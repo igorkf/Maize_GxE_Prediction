@@ -193,7 +193,7 @@ if __name__ == '__main__':
     model = xgb.XGBRegressor(
         random_state=42,
         max_depth=2
-    )  # RMSE=2.087634195727556
+    )  # RMSE=2.0809258420827947
     model.fit(xtrain, ytrain)
 
     # predict

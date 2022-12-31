@@ -155,7 +155,8 @@ def feat_eng_target(df, ref_year, lag):
         .groupby('Field_Location')
         .agg(
             **{f'mean_yield_lag_{lag}': ('Yield_Mg_ha', 'mean')},
-            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')}
+            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')},
+            **{f'sum_yield_lag_{lag}': ('Yield_Mg_ha', 'sum')}
         )
     )
     return df_agg
