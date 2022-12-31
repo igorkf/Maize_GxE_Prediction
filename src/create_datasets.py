@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # print('Sparsity:', sum([x == 0 for x in mbspca.components_]) / len(mbspca.components_))
 
     xtrain_geno = pd.DataFrame(mbspca.transform(xtrain_geno), index=xtrain_geno.index)
-    component_cols = [f'geno_svd_comp{i}' for i in range(xtrain_geno.shape[1])]
+    component_cols = [f'geno_sparsepca_comp{i}' for i in range(xtrain_geno.shape[1])]
     xtrain_geno.columns = component_cols
     xval_geno = pd.DataFrame(mbspca.transform(xval_geno), columns=component_cols, index=xval_geno.index)
     xtest_geno = pd.DataFrame(mbspca.transform(xtest_geno), columns=component_cols, index=xtest_geno.index)
