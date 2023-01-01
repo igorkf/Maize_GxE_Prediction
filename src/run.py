@@ -69,7 +69,9 @@ if __name__ == '__main__':
     # predict on test
     df_sub = process_test_data(TEST_PATH).set_index(['Env', 'Hybrid'])
     df_sub['Yield_Mg_ha'] = model.predict(xtest)
-    df_sub.to_csv('output/submission_3rd_sub.csv', index=False)    
+    df_sub = df_sub.reset_index()
+    del df_sub['Field_Location']
+    df_sub.to_csv('output/submission_3rd_sub.csv', index=False)
 
     # observed X predicted statistics
     obs_vs_pred = pd.concat([
