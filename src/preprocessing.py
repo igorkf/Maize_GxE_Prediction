@@ -70,7 +70,9 @@ def feat_eng_soil(df):
         df
         .groupby('Env')
         .agg(
-            Nitrate_N_ppm_N=('Nitrate-N ppm N', 'mean')
+            Nitrate_N_ppm_N=('Nitrate-N ppm N', 'mean'),
+            lbs_N_A=('lbs N/A', 'mean'),
+            percentage_Ca_Sat=('%Ca Sat', 'mean')
         )
     )
     return df_agg

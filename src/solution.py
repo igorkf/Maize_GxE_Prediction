@@ -101,8 +101,6 @@ if __name__ == '__main__':
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left').set_index(xtest.index)
     del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
 
-    print(xtrain.corr())
-    
     # extract targets
     ytrain = extract_target(xtrain)
     yval = extract_target(xval)
@@ -128,11 +126,9 @@ if __name__ == '__main__':
     print('ytrain nulls:', ytrain.isnull().sum() / len(ytrain))
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
-
     # train model
-    # model = linear_model.LinearRegression()
     model = lgbm.LGBMRegressor(
-        random_state=42, 
+        random_state=42,
         max_depth=2
     )
     model.fit(xtrain, ytrain)
@@ -146,11 +142,11 @@ if __name__ == '__main__':
         'ytrue': yval.values,
         'yhat': yhat
     })
-    df_eval.to_csv('output/oof_solution_2nd_sub.csv', index=False)
+    df_eval.to_csv('output/oof_solution_4th_sub.csv', index=False)
 
     # predict on test
     df_sub['Yield_Mg_ha'] = model.predict(xtest)
-    df_sub.to_csv('output/submission_2nd_sub.csv', index=False)
+    df_sub.to_csv('output/submission_4th_sub.csv', index=False)
     
     # evaluate
     rmse_per_field = df_eval.groupby('Field_Location').apply(
