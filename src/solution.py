@@ -100,6 +100,11 @@ if __name__ == '__main__':
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left').set_index(xtest.index)
     del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
 
+    # weather-location interactions
+    for dfs in [xtrain, xval, xtest]:
+        dfs['T2M_std_spring_X_weather_station_lat'] = dfs['T2M_std_spring'] * dfs['weather_station_lat']
+        dfs['T2M_std_fall_X_weather_station_lat'] = dfs['T2M_std_fall'] * dfs['weather_station_lat']
+
     # extract targets
     ytrain = extract_target(xtrain)
     yval = extract_target(xval)
