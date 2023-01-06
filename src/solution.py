@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # WEATHER
     weather = pd.read_csv('data/Training_Data/4_Training_Weather_Data_2014_2021.csv')
     weather_test = pd.read_csv('data/Testing_Data/4_Testing_Weather_Data_2022.csv')
-
+    
     # SOIL
     soil = pd.read_csv('data/Training_Data/3_Training_Soil_Data_2015_2021.csv')
     soil_test = pd.read_csv('data/Testing_Data/3_Testing_Soil_Data_2022.csv')

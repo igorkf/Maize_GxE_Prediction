@@ -44,6 +44,7 @@ def feat_eng_weather(df):
             T2M_max=('T2M', 'max'),
             T2M_min=('T2M', 'min'),
             T2M_std=('T2M', 'std'),
+            T2M_mean=('T2M', 'mean'),
 
             T2M_MIN_max=('T2M_MIN', 'max'),
             T2M_MIN_std=('T2M_MIN', 'std'),
@@ -56,6 +57,7 @@ def feat_eng_weather(df):
 
             PRECTOTCORR_max=('PRECTOTCORR', 'max'),
             PRECTOTCORR_median=('PRECTOTCORR', 'median'),
+            PRECTOTCORR_n_days_less_10_mm=('PRECTOTCORR', lambda x: sum(x < 10)),
 
             ALLSKY_SFC_PAR_TOT_std=('ALLSKY_SFC_PAR_TOT', 'std'),
 
