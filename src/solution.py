@@ -23,7 +23,7 @@ TEST_PATH = 'data/Testing_Data/1_Submission_Template_2022.csv'
 META_TRAIN_PATH = 'data/Training_Data/2_Training_Meta_Data_2014_2021.csv'
 META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 
-META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon']
+META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
 
 
 if __name__ == '__main__':
@@ -76,10 +76,9 @@ if __name__ == '__main__':
     xval_ec = ec[ec.index.isin(xval.index)].copy()
     xtest_ec = ec_test[ec_test.index.isin(xtest.index)].copy()
 
-    # TODO: try other dim reduction methods
     n_components = 15
     svd = TruncatedSVD(n_components=n_components, n_iter=20, random_state=42)
-    svd.fit(xtrain_ec.values)
+    svd.fit(xtrain_ec)
     print('SVD explained variance:', svd.explained_variance_ratio_.sum())
 
     xtrain_ec = pd.DataFrame(svd.transform(xtrain_ec), index=xtrain_ec.index)

@@ -8,6 +8,7 @@ def process_metadata(path: str, encoding: str = 'latin-1'):
         'Weather_Station_Latitude (in decimal numbers NOT DMS)': 'weather_station_lat',
         'Weather_Station_Longitude (in decimal numbers NOT DMS)': 'weather_station_lon'
     })
+    df['treatment_not_standard'] = (df['Treatment'] != 'Standard').astype('int')
     return df
 
 
@@ -23,7 +24,8 @@ def feature_engineer(df):
         .groupby(['Env', 'Hybrid']).agg(
             weather_station_lat=('weather_station_lat', 'mean'),
             weather_station_lon=('weather_station_lon', 'mean'),
-            Yield_Mg_ha=('Yield_Mg_ha', 'mean')
+            treatment_not_standard=('treatment_not_standard', 'mean'),
+            Yield_Mg_ha=('Yield_Mg_ha', 'mean')  # the target
         )
     )
     return df_agg
