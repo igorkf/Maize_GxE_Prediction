@@ -48,6 +48,7 @@ def feat_eng_weather(df):
 
             T2M_MIN_max=('T2M_MIN', 'max'),
             T2M_MIN_std=('T2M_MIN', 'std'),
+            T2M_MIN_cv=('T2M_MIN', lambda x: x.std() / x.mean()),
 
             WS2M_max=('WS2M', 'max'),
 

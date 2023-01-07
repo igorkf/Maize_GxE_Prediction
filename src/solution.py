@@ -104,6 +104,8 @@ if __name__ == '__main__':
     for dfs in [xtrain, xval, xtest]:
         dfs['T2M_std_spring_X_weather_station_lat'] = dfs['T2M_std_spring'] * dfs['weather_station_lat']
         dfs['T2M_std_fall_X_weather_station_lat'] = dfs['T2M_std_fall'] * dfs['weather_station_lat']
+        dfs['T2M_min_fall_X_weather_station_lat'] = dfs['T2M_min_fall'] * dfs['weather_station_lat']
+        # dfs['PRECTOTCORR_median_winter_X_weather_station_lat'] = dfs['PRECTOTCORR_median_winter'] * dfs['weather_station_lat']
 
     # extract targets
     ytrain = extract_target(xtrain)
@@ -136,6 +138,11 @@ if __name__ == '__main__':
         max_depth=2
     )
     model.fit(xtrain, ytrain)
+
+    # feature importance
+    # feat_imp = dict(zip(model.feature_name_, model.feature_importances_))
+    # feat_imp = dict(sorted(feat_imp.items(), key=lambda x: -x[1]))
+    # print(feat_imp)
 
     # predict
     yhat = model.predict(xval)
