@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     # TEST
     test = process_test_data(TEST_PATH)
-    xtest = test.merge(meta_test[META_COLS], on='Env', how='left').set_index(['Env', 'Hybrid']).drop(['Field_Location'], axis=1)
+    xtest = test.merge(meta_test[META_COLS], on='Env', how='left').drop(['Field_Location'], axis=1)
     df_sub = xtest.reset_index()[['Env', 'Hybrid']]
 
     # TRAIT
@@ -62,8 +62,9 @@ if __name__ == '__main__':
     xtest = feature_engineer(xtest)
 
     # feat eng (weather)
-    xtrain = xtrain.merge(feat_eng_weather(weather), on='Env', how='left')
-    xval = xval.merge(feat_eng_weather(weather), on='Env', how='left')
+    weather_feats = feat_eng_weather(weather)
+    xtrain = xtrain.merge(weather_feats, on='Env', how='left')
+    xval = xval.merge(weather_feats, on='Env', how='left')
     xtest = xtest.merge(feat_eng_weather(weather_test), on='Env', how='left')
 
     # feat eng (soil)
@@ -72,9 +73,9 @@ if __name__ == '__main__':
     xtest = xtest.merge(feat_eng_soil(soil_test), on='Env', how='left')
 
     # feat eng (EC)
-    xtrain_ec = ec[ec.index.isin(xtrain.index)].copy()
-    xval_ec = ec[ec.index.isin(xval.index)].copy()
-    xtest_ec = ec_test[ec_test.index.isin(xtest.index)].copy()
+    xtrain_ec = ec[ec.index.isin(xtrain['Env'])].copy()
+    xval_ec = ec[ec.index.isin(xval['Env'])].copy()
+    xtest_ec = ec_test[ec_test.index.isin(xtest['Env'])].copy()
 
     n_components = 15
     svd = TruncatedSVD(n_components=n_components, n_iter=20, random_state=42)
@@ -92,9 +93,9 @@ if __name__ == '__main__':
     xtest = xtest.merge(xtest_ec, on='Env', how='left')
 
     # feat eng (target)
-    xtrain['Field_Location'] = xtrain.index.get_level_values(0).str.replace('(_).*', '', regex=True)
-    xval['Field_Location'] = xval.index.get_level_values(0).str.replace('(_).*', '', regex=True)
-    xtest['Field_Location'] = xtest.index.get_level_values(0).str.replace('(_).*', '', regex=True)
+    xtrain['Field_Location'] = xtrain['Env'].str.replace('(_).*', '', regex=True)
+    xval['Field_Location'] = xval['Env'].str.replace('(_).*', '', regex=True)
+    xtest['Field_Location'] = xtest['Env'].str.replace('(_).*', '', regex=True)
     xtrain = xtrain.merge(feat_eng_target(trait, ref_year=YTRAIN_YEAR, lag=2), on='Field_Location', how='left').set_index(xtrain.index)
     xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=2), on='Field_Location', how='left').set_index(xval.index)
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left').set_index(xtest.index)
@@ -105,7 +106,11 @@ if __name__ == '__main__':
         dfs['T2M_std_spring_X_weather_station_lat'] = dfs['T2M_std_spring'] * dfs['weather_station_lat']
         dfs['T2M_std_fall_X_weather_station_lat'] = dfs['T2M_std_fall'] * dfs['weather_station_lat']
         dfs['T2M_min_fall_X_weather_station_lat'] = dfs['T2M_min_fall'] * dfs['weather_station_lat']
-        # dfs['PRECTOTCORR_median_winter_X_weather_station_lat'] = dfs['PRECTOTCORR_median_winter'] * dfs['weather_station_lat']
+
+    # set index
+    xtrain = xtrain.set_index(['Env', 'Hybrid'])
+    xval = xval.set_index(['Env', 'Hybrid'])
+    xtest = xtest.set_index(['Env', 'Hybrid'])
 
     # extract targets
     ytrain = extract_target(xtrain)
@@ -119,7 +124,6 @@ if __name__ == '__main__':
     # NA imputing
     for col in xtrain.columns:
         mean = xtrain[col].mean()
-        std = xtrain[col].std()
         xtrain[col].fillna(mean, inplace=True)
         xval[col].fillna(mean, inplace=True)
         xtest[col].fillna(mean, inplace=True)

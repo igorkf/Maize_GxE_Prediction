@@ -21,12 +21,14 @@ def process_test_data(path: str):
 def feature_engineer(df):
     df_agg = (
         df
-        .groupby(['Env', 'Hybrid']).agg(
+        .groupby(['Env', 'Hybrid'])  # hybrid is here only to not lose the reference
+        .agg(
             weather_station_lat=('weather_station_lat', 'mean'),
             weather_station_lon=('weather_station_lon', 'mean'),
             treatment_not_standard=('treatment_not_standard', 'mean'),
             Yield_Mg_ha=('Yield_Mg_ha', 'mean')  # the target
         )
+        .reset_index()
     )
     return df_agg
 
