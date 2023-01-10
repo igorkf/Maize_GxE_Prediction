@@ -55,6 +55,7 @@ def feat_eng_weather(df):
             WS2M_max=('WS2M', 'max'),
 
             RH2M_max=('RH2M', 'max'),
+            RH2M_p90=('RH2M', lambda x: x.quantile(0.9)),
 
             QV2M_mean=('QV2M', 'mean'),
 
