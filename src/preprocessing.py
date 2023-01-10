@@ -93,7 +93,11 @@ def feat_eng_target(df, ref_year, lag):
         .groupby('Field_Location')
         .agg(
             **{f'mean_yield_lag_{lag}': ('Yield_Mg_ha', 'mean')},
-            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')}
+            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')},
+            **{f'p1_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.01))},
+            **{f'q1_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.25))},
+            **{f'q3_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.75))},
+            **{f'p90_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.90))},
         )
     )
     return df_agg

@@ -96,9 +96,9 @@ if __name__ == '__main__':
     xtrain['Field_Location'] = xtrain['Env'].str.replace('(_).*', '', regex=True)
     xval['Field_Location'] = xval['Env'].str.replace('(_).*', '', regex=True)
     xtest['Field_Location'] = xtest['Env'].str.replace('(_).*', '', regex=True)
-    xtrain = xtrain.merge(feat_eng_target(trait, ref_year=YTRAIN_YEAR, lag=2), on='Field_Location', how='left').set_index(xtrain.index)
-    xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=2), on='Field_Location', how='left').set_index(xval.index)
-    xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left').set_index(xtest.index)
+    xtrain = xtrain.merge(feat_eng_target(trait, ref_year=YTRAIN_YEAR, lag=2), on='Field_Location', how='left')
+    xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=2), on='Field_Location', how='left')
+    xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left')
     del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
 
     # weather-location interactions
