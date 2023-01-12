@@ -6,6 +6,7 @@ from sklearn.metrics import r2_score
 from preprocessing import (
     process_metadata,
     process_test_data,
+    lat_lon_to_bin,
     split_trait_data,
     feature_engineer,
     feat_eng_weather,
@@ -24,6 +25,10 @@ META_TRAIN_PATH = 'data/Training_Data/2_Training_Meta_Data_2014_2021.csv'
 META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 
 META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
+CAT_COLS = []  # to avoid NA imputation
+
+LAT_BIN_STEP = 1.2
+LON_BIN_STEP = LAT_BIN_STEP * 3
 
 
 if __name__ == '__main__':
@@ -101,11 +106,19 @@ if __name__ == '__main__':
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left')
     del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
 
-    # weather-location interactions
+    # weather-location interaction and lat/lon binning
     for dfs in [xtrain, xval, xtest]:
         dfs['T2M_std_spring_X_weather_station_lat'] = dfs['T2M_std_spring'] * dfs['weather_station_lat']
         dfs['T2M_std_fall_X_weather_station_lat'] = dfs['T2M_std_fall'] * dfs['weather_station_lat']
         dfs['T2M_min_fall_X_weather_station_lat'] = dfs['T2M_min_fall'] * dfs['weather_station_lat']
+
+        # binning lat/lon seems to help reducing noise
+        dfs['weather_station_lat'] = dfs['weather_station_lat'].apply(lambda x: lat_lon_to_bin(x, LAT_BIN_STEP))
+        dfs['weather_station_lon'] = dfs['weather_station_lon'].apply(lambda x: lat_lon_to_bin(x, LON_BIN_STEP))
+
+    print('lat/lon unique bins:')
+    print('lat:', sorted(set(xtrain['weather_station_lat'].unique())))
+    print('lon:', sorted(set(xtrain['weather_station_lon'].unique())))
 
     # set index
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
@@ -122,7 +135,7 @@ if __name__ == '__main__':
     print(xtest.isnull().sum() / len(xtest))
 
     # NA imputing
-    for col in xtrain.columns:
+    for col in [x for x in xtrain.columns if x not in CAT_COLS]:
         mean = xtrain[col].mean()
         xtrain[col].fillna(mean, inplace=True)
         xval[col].fillna(mean, inplace=True)

@@ -1,3 +1,5 @@
+from math import floor
+
 import pandas as pd
 
 
@@ -16,6 +18,13 @@ def process_test_data(path: str):
     df = pd.read_csv(path)
     df['Field_Location'] = df['Env'].str.replace('(_).*', '', regex=True)
     return df
+
+
+def lat_lon_to_bin(x, step: float):
+    if pd.notnull(x):
+        return floor(x / step) * step
+    else:
+        return x
 
 
 def feature_engineer(df):
