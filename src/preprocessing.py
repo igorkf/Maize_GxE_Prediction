@@ -27,7 +27,7 @@ def lat_lon_to_bin(x, step: float):
         return x
 
 
-def feature_engineer(df):
+def feature_engineer(df: pd.DataFrame):
     df_agg = (
         df
         .groupby(['Env', 'Hybrid'])  # hybrid is here only to not lose the reference
@@ -42,7 +42,7 @@ def feature_engineer(df):
     return df_agg
 
 
-def feat_eng_weather(df):
+def feat_eng_weather(df: pd.DataFrame):
     df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
     df['month'] = df['Date'].dt.month 
     df['season'] = df['month'] % 12 // 3 + 1  # https://stackoverflow.com/a/44124490/11122513
@@ -76,13 +76,13 @@ def feat_eng_weather(df):
 
         )
         .reset_index()
-        .pivot('Env', 'season')
+        .pivot(index='Env', columns='season')
     )
     df_agg.columns = ['_'.join(col) for col in df_agg.columns]
     return df_agg
 
 
-def feat_eng_soil(df):
+def feat_eng_soil(df: pd.DataFrame):
     df_agg = (
         df
         .groupby('Env')
@@ -95,7 +95,7 @@ def feat_eng_soil(df):
     return df_agg
 
 
-def feat_eng_target(df, ref_year, lag):
+def feat_eng_target(df: pd.DataFrame, ref_year: int, lag: int):
     assert lag >= 1
     df_year = df[df['Year'] <= ref_year - lag]
     df_agg = (
@@ -113,13 +113,13 @@ def feat_eng_target(df, ref_year, lag):
     return df_agg
 
 
-def extract_target(df):
+def extract_target(df: pd.DataFrame):
     y = df['Yield_Mg_ha']
     del df['Yield_Mg_ha']
     return y
 
 
-def split_trait_data(df, val_year: int, fillna: bool = False):
+def split_trait_data(df: pd.DataFrame, val_year: int, fillna: bool = False):
     '''
     Targets with NA are due to discarded plots (accordingly with Cyverse data)
     TODO: discard or impute?

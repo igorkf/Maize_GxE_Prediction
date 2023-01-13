@@ -1,5 +1,4 @@
 import pandas as pd
-from sklearn.decomposition import TruncatedSVD
 import lightgbm as lgbm
 from sklearn.metrics import r2_score
 

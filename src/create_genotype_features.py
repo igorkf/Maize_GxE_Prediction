@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     # hybrids only on test
     only_in_test = set(xtest['Hybrid']) - set(xtrain['Hybrid']) - set(xval['Hybrid'])
-    print('Only in test shape:', len(only_in_test))
+    print('Unique genotypes ONLY in test:', len(only_in_test))
 
     df_genos = pd.read_csv(
         'output/variants_vs_samples_GT_ref_alt.csv',

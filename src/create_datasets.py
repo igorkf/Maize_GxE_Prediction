@@ -86,7 +86,7 @@ if __name__ == '__main__':
     print('SVD explained variance:', svd.explained_variance_ratio_.sum())
 
     xtrain_ec = pd.DataFrame(svd.transform(xtrain_ec), index=xtrain_ec.index)
-    component_cols = [f"EC_svd_comp{i}" for i in range(xtrain_ec.shape[1])]
+    component_cols = [f'EC_svd_comp{i}' for i in range(xtrain_ec.shape[1])]
     xtrain_ec.columns = component_cols
     xval_ec = pd.DataFrame(svd.transform(xval_ec), columns=component_cols, index=xval_ec.index)
     xtest_ec = pd.DataFrame(svd.transform(xtest_ec), columns=component_cols, index=xtest_ec.index)

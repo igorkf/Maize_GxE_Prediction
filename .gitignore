@@ -6,4 +6,5 @@ __pycache__/
 *.csv
 *.docx
 *.zip
+*.vcf
 .venv
