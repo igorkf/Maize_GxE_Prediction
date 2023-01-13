@@ -21,6 +21,14 @@ if __name__ == '__main__':
     ytrain = pd.read_csv('output/ytrain.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
     yval = pd.read_csv('output/yval.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
 
+    # bind SVD genotypic features
+    xtrain_geno = pd.read_csv('output/xtrain_geno.csv')
+    xval_geno = pd.read_csv('output/xval_geno.csv')
+    xtest_geno = pd.read_csv('output/xtest_geno.csv')
+    xtrain = xtrain.merge(xtrain_geno, on='Hybrid', how='left')
+    xval = xval.merge(xval_geno, on='Hybrid', how='left')
+    xtest = xtest.merge(xtest_geno, on='Hybrid', how='left')
+
     # set index
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
     xval = xval.set_index(['Env', 'Hybrid'])
@@ -29,7 +37,8 @@ if __name__ == '__main__':
     # train model
     model = lgbm.LGBMRegressor(
         random_state=42,
-        max_depth=2
+        max_depth=2,
+        n_estimators=280
     )
     model.fit(xtrain, ytrain)
 
