@@ -1,3 +1,5 @@
+from math import floor
+
 import pandas as pd
 
 
@@ -8,6 +10,7 @@ def process_metadata(path: str, encoding: str = 'latin-1'):
         'Weather_Station_Latitude (in decimal numbers NOT DMS)': 'weather_station_lat',
         'Weather_Station_Longitude (in decimal numbers NOT DMS)': 'weather_station_lon'
     })
+    df['treatment_not_standard'] = (df['Treatment'] != 'Standard').astype('int')
     return df
 
 
@@ -17,19 +20,29 @@ def process_test_data(path: str):
     return df
 
 
-def feature_engineer(df):
+def lat_lon_to_bin(x, step: float):
+    if pd.notnull(x):
+        return floor(x / step) * step
+    else:
+        return x
+
+
+def feature_engineer(df: pd.DataFrame):
     df_agg = (
         df
-        .groupby(['Env', 'Hybrid']).agg(
+        .groupby(['Env', 'Hybrid'])  # hybrid is here only to not lose the reference
+        .agg(
             weather_station_lat=('weather_station_lat', 'mean'),
             weather_station_lon=('weather_station_lon', 'mean'),
-            Yield_Mg_ha=('Yield_Mg_ha', 'mean')
+            treatment_not_standard=('treatment_not_standard', 'mean'),
+            Yield_Mg_ha=('Yield_Mg_ha', 'mean')  # the target
         )
+        .reset_index()
     )
     return df_agg
 
 
-def feat_eng_weather(df):
+def feat_eng_weather(df: pd.DataFrame):
     df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
     df['month'] = df['Date'].dt.month 
     df['season'] = df['month'] % 12 // 3 + 1  # https://stackoverflow.com/a/44124490/11122513
@@ -42,41 +55,47 @@ def feat_eng_weather(df):
             T2M_max=('T2M', 'max'),
             T2M_min=('T2M', 'min'),
             T2M_std=('T2M', 'std'),
+            T2M_mean=('T2M', 'mean'),
 
             T2M_MIN_max=('T2M_MIN', 'max'),
             T2M_MIN_std=('T2M_MIN', 'std'),
+            T2M_MIN_cv=('T2M_MIN', lambda x: x.std() / x.mean()),
 
             WS2M_max=('WS2M', 'max'),
 
             RH2M_max=('RH2M', 'max'),
+            RH2M_p90=('RH2M', lambda x: x.quantile(0.9)),
 
             QV2M_mean=('QV2M', 'mean'),
 
             PRECTOTCORR_max=('PRECTOTCORR', 'max'),
             PRECTOTCORR_median=('PRECTOTCORR', 'median'),
+            PRECTOTCORR_n_days_less_10_mm=('PRECTOTCORR', lambda x: sum(x < 10)),
 
             ALLSKY_SFC_PAR_TOT_std=('ALLSKY_SFC_PAR_TOT', 'std'),
 
         )
         .reset_index()
-        .pivot('Env', 'season')
+        .pivot(index='Env', columns='season')
     )
     df_agg.columns = ['_'.join(col) for col in df_agg.columns]
     return df_agg
 
 
-def feat_eng_soil(df):
+def feat_eng_soil(df: pd.DataFrame):
     df_agg = (
         df
         .groupby('Env')
         .agg(
-            Nitrate_N_ppm_N=('Nitrate-N ppm N', 'mean')
+            Nitrate_N_ppm_N=('Nitrate-N ppm N', 'mean'),
+            lbs_N_A=('lbs N/A', 'mean'),
+            percentage_Ca_Sat=('%Ca Sat', 'mean')
         )
     )
     return df_agg
 
 
-def feat_eng_target(df, ref_year, lag):
+def feat_eng_target(df: pd.DataFrame, ref_year: int, lag: int):
     assert lag >= 1
     df_year = df[df['Year'] <= ref_year - lag]
     df_agg = (
@@ -84,19 +103,23 @@ def feat_eng_target(df, ref_year, lag):
         .groupby('Field_Location')
         .agg(
             **{f'mean_yield_lag_{lag}': ('Yield_Mg_ha', 'mean')},
-            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')}
+            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')},
+            **{f'p1_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.01))},
+            **{f'q1_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.25))},
+            **{f'q3_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.75))},
+            **{f'p90_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.90))},
         )
     )
     return df_agg
 
 
-def extract_target(df):
+def extract_target(df: pd.DataFrame):
     y = df['Yield_Mg_ha']
     del df['Yield_Mg_ha']
     return y
 
 
-def split_trait_data(df, val_year: int, fillna: bool = False):
+def split_trait_data(df: pd.DataFrame, val_year: int, fillna: bool = False):
     '''
     Targets with NA are due to discarded plots (accordingly with Cyverse data)
     TODO: discard or impute?
