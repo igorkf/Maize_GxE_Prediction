@@ -22,5 +22,9 @@
     python3 src/solution.py
     ```
 
+Tested with:   
+- Python 3.8.10   
+- Ubuntu 20.04.5 LTS (Focal Fossa)
+
 
 
