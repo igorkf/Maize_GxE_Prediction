@@ -2,9 +2,9 @@
 notebooks/
 __pycache__/
 *.ipynb
-*.txt
 *.csv
 *.docx
 *.zip
 *.vcf
 .venv
+deprecated_*
