@@ -8,3 +8,4 @@ __pycache__/
 *.vcf
 .venv
 deprecated_*
+*.txt
