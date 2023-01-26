@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     # Define the loss function and optimizer
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Train the model and evaluate
     for epoch in range(num_epochs):
