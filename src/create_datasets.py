@@ -66,9 +66,15 @@ if __name__ == '__main__':
 
     # feat eng (weather)
     weather_feats = feat_eng_weather(weather)
+    weather_test_feats = feat_eng_weather(weather_test)
     xtrain = xtrain.merge(weather_feats, on='Env', how='left')
     xval = xval.merge(weather_feats, on='Env', how='left')
-    xtest = xtest.merge(feat_eng_weather(weather_test), on='Env', how='left')
+    xtest = xtest.merge(weather_test_feats, on='Env', how='left')
+
+    # save weather features to disk
+    weather_feats[weather_feats.index.isin(xtrain['Env'])].reset_index().to_csv('output/train_weather_features.csv', index=False)
+    weather_feats[weather_feats.index.isin(xval['Env'])].reset_index().to_csv('output/val_weather_features.csv', index=False)
+    weather_test_feats.reset_index().to_csv('output/test_weather_features.csv', index=False)
 
     # feat eng (soil)
     xtrain = xtrain.merge(feat_eng_soil(soil), on='Env', how='left')

@@ -9,3 +9,5 @@ __pycache__/
 .venv
 deprecated_*
 *.txt
+!requirements.txt
+.vscode
