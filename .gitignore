@@ -1,7 +1,6 @@
 .ipynb_checkpoints/
 notebooks/
 __pycache__/
-*.ipynb
 *.csv
 *.docx
 *.zip
