@@ -9,5 +9,6 @@ __pycache__/
 .venv
 deprecated_*
 *.txt
+*.parquet
 !requirements.txt
 !logs/*
