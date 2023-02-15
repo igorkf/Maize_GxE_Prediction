@@ -1,4 +1,6 @@
 import argparse
+import os
+import contextlib
 
 import pandas as pd
 import lightgbm as lgbm
@@ -13,8 +15,13 @@ from tune import objective
 parser = argparse.ArgumentParser()
 parser.add_argument('--A', action='store_true', default=False)
 parser.add_argument('--D', action='store_true', default=False)
+parser.add_argument('--epiAA', action='store_true', default=False)
+parser.add_argument('--epiDD', action='store_true', default=False)
+parser.add_argument('--epiAD', action='store_true', default=False)
 parser.add_argument('--svd', action='store_true', default=False)
+parser.add_argument('--n_components', default=100)
 args = parser.parse_args()
+
 
 outfile = 'output/oof_g_model'
 
@@ -41,12 +48,35 @@ if __name__ == '__main__':
         A = preprocess(A, 'A')
         kinships.append(A)
         outfile += '_A'
+
     if args.D:
         print('Using D kinship matrix.')
         D = pd.read_csv('output/kinship_dominant.txt', sep='\t')
         D = preprocess(D, 'D')
         kinships.append(D)
         outfile += '_D'
+
+    if args.epiAA:
+        print('Using epi AA kinship matrix.')
+        epiAA = pd.read_csv('output/kinship_epi_AA.txt', sep='\t')
+        epiAA = preprocess(epiAA, 'epiAA')
+        kinships.append(epiAA)
+        outfile += '_epiAA'
+
+    if args.epiDD:
+        print('Using epi DD kinship matrix.')
+        epiDD = pd.read_csv('output/kinship_epi_DD.txt', sep='\t')
+        epiDD = preprocess(epiDD, 'epiDD')
+        kinships.append(epiDD)
+        outfile += '_epiDD'
+
+    if args.epiAD:
+        print('Using epi AD kinship matrix.')
+        epiAD = pd.read_csv('output/kinship_epi_AD.txt', sep='\t')
+        epiAD = preprocess(epiAD, 'epiAD')
+        kinships.append(epiAD)
+        outfile += '_epiAD'
+
     if len(kinships) == 0:
         raise Exception('Choose at least one kinship matrix.')
     else:
@@ -86,16 +116,15 @@ if __name__ == '__main__':
         lag_cols = [x for x in xtrain.columns if 'yield_lag' in x]
         xtrain_no_lags = xtrain.drop(lag_cols, axis=1)
         xval_no_lags = xval.drop(lag_cols, axis=1)
-        n_components = 100
-        outfile += f'_svd{n_components}comps'
+        outfile += f'_svd{args.n_components}comps'
         print('Using svd.')
-        print('# Components:', n_components)
-        svd = TruncatedSVD(n_components=n_components, random_state=42)
+        print('# Components:', args.n_components)
+        svd = TruncatedSVD(n_components=args.n_components, random_state=42)
         svd.fit(xtrain_no_lags)  # fit but without lagged yield features
         print('Explained variance:', svd.explained_variance_ratio_.sum())
 
         # transform from the fitted svd
-        svd_cols = [f'svd{i}' for i in range(n_components)]
+        svd_cols = [f'svd{i}' for i in range(args.n_components)]
         xtrain_svd = pd.DataFrame(svd.transform(xtrain_no_lags), columns=svd_cols, index=xtrain_no_lags.index)
         xval_svd = pd.DataFrame(svd.transform(xval_no_lags), columns=svd_cols, index=xval_no_lags.index)
 
@@ -106,17 +135,20 @@ if __name__ == '__main__':
     # tune model if using svd features
     if args.svd:
         print('Tunning.')
-        optuna.logging.set_verbosity(optuna.logging.WARNING)  # silent optuna results
-        study = optuna.create_study(direction='minimize', sampler=optuna.samplers.TPESampler(seed=42))
-        func = lambda trial: objective(trial, xtrain, ytrain, xval, yval)
-        study.optimize(func, n_trials=5)
-        print('# Trials:', len(study.trials))
-        print('Best trial:', study.best_trial.params)
-        print('Best RMSE:', study.best_value)
 
-        # fit again with best parameters
-        model = lgbm.LGBMRegressor(**study.best_trial.params, random_state=42)
-        model.fit(xtrain, ytrain)
+        # silent lgbm warnings
+        with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
+            optuna.logging.set_verbosity(optuna.logging.WARNING)  # silent optuna results
+            study = optuna.create_study(direction='minimize', sampler=optuna.samplers.TPESampler(seed=42))
+            func = lambda trial: objective(trial, xtrain, ytrain, xval, yval)
+            study.optimize(func, n_trials=200)
+            print('# Trials:', len(study.trials))
+            print('Best trial:', study.best_trial.params)
+            print('Best RMSE:', study.best_value)
+
+            # fit again with best parameters
+            model = lgbm.LGBMRegressor(**study.best_trial.params, random_state=42)
+            model.fit(xtrain, ytrain)
 
         # predict
         ypred = model.predict(xval)
@@ -127,5 +159,5 @@ if __name__ == '__main__':
 
     # write OOF results
     outfile += '.csv'
-    print('Writing file:', outfile)
+    print('Writing file:', outfile, '\n')
     df_eval.to_csv(outfile, index=False)
