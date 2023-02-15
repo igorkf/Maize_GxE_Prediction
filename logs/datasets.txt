@@ -1,0 +1,47 @@
+SVD explained variance: 0.9997791525198593
+lat/lon unique bins:
+lat: [nan, 30.0, 31.2, 33.6, 34.8, 38.4, 39.6, 40.8, 42.0, 43.199999999999996, 50.4]
+lon: [nan, -97.19999999999999, -93.6, -89.99999999999999, -86.39999999999999, -82.8, -79.19999999999999, -75.6, 7.199999999999999]
+weather_station_lat                     0.043874
+weather_station_lon                     0.043874
+treatment_not_standard                  0.000000
+T2M_max_fall                            0.000000
+T2M_max_spring                          0.000000
+                                          ...   
+q3_yield_lag_2                          0.097302
+p90_yield_lag_2                         0.097302
+T2M_std_spring_X_weather_station_lat    0.043874
+T2M_std_fall_X_weather_station_lat      0.043874
+T2M_min_fall_X_weather_station_lat      0.043874
+Length: 90, dtype: float64
+weather_station_lat                     0.029792
+weather_station_lon                     0.029792
+treatment_not_standard                  0.000000
+T2M_max_fall                            0.000000
+T2M_max_spring                          0.000000
+                                          ...   
+q3_yield_lag_2                          0.032360
+p90_yield_lag_2                         0.032360
+T2M_std_spring_X_weather_station_lat    0.029792
+T2M_std_fall_X_weather_station_lat      0.029792
+T2M_min_fall_X_weather_station_lat      0.029792
+Length: 90, dtype: float64
+weather_station_lat                     0.257464
+weather_station_lon                     0.257464
+treatment_not_standard                  0.000000
+T2M_max_fall                            0.000000
+T2M_max_spring                          0.000000
+                                          ...   
+q3_yield_lag_2                          0.000000
+p90_yield_lag_2                         0.000000
+T2M_std_spring_X_weather_station_lat    0.257464
+T2M_std_fall_X_weather_station_lat      0.257464
+T2M_min_fall_X_weather_station_lat      0.257464
+Length: 90, dtype: float64
+xtrain shape: (11305, 90)
+xval shape: (13628, 90)
+xtest shape: (11555, 90)
+ytrain shape: (11305,)
+yval shape: (13628,)
+ytrain nulls: 0.0
+yval nulls: 0.0
