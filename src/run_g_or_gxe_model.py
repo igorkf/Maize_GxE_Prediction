@@ -13,6 +13,7 @@ from tune import objective
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', choices={'G', 'GxE'})
 parser.add_argument('--A', action='store_true', default=False)
 parser.add_argument('--D', action='store_true', default=False)
 parser.add_argument('--epiAA', action='store_true', default=False)
@@ -23,15 +24,39 @@ parser.add_argument('--n_components', default=100)
 args = parser.parse_args()
 
 
-outfile = 'output/oof_g_model'
+if args.model == 'G':
+    outfile = 'output/oof_g_model'
+    print('Using G model.')
+else:
+    print('Using GxE model.')
+    outfile = 'output/oof_gxe_model'
+
+TRAIN_YEAR = 2020
+VAL_YEAR = 2021
 
 
-def preprocess(df, kinship: str):
+def preprocess_g(df, kinship):
     df.columns = [x[:len(x) // 2] for x in df.columns]  # fix duplicated column names
     df.index = df.columns
     df.index.name = 'Hybrid'
     df.columns = [f'{x}_{kinship}' for x in df.columns]
     return df
+
+
+def preprocess_gxe(df, year, kinship):
+    df[['Env', 'Hybrid']] = df['id'].str.split(':', expand=True)
+    df['Env'] += '_' + str(year)
+    df = df.drop('id', axis=1).set_index(['Env', 'Hybrid'])
+    df.columns = [f'{x}_{kinship}' for x in df.columns]
+    return df
+
+
+def prepare_train_val_gxe(kinship):
+    xtrain = pd.read_parquet(f'output/kronecker_{kinship}_train.parquet')
+    xtrain = preprocess_gxe(xtrain, year=TRAIN_YEAR, kinship=kinship)
+    xval = pd.read_parquet(f'output/kronecker_{kinship}_val.parquet')
+    xval = preprocess_gxe(xval, year=VAL_YEAR, kinship=kinship)
+    return xtrain, xval
 
 
 if __name__ == '__main__':
@@ -40,53 +65,86 @@ if __name__ == '__main__':
     ytrain = pd.read_csv('output/ytrain.csv')
     yval = pd.read_csv('output/yval.csv')
 
-    # load kinships
+    # load kinships or kroneckers
     kinships = []
+    kroneckers_train = []
+    kroneckers_val = []
     if args.A:
-        print('Using A kinship matrix.')
-        A = pd.read_csv('output/kinship_additive.txt', sep='\t')
-        A = preprocess(A, 'A')
-        kinships.append(A)
+        print('Using A matrix.')
         outfile += '_A'
+        if args.model == 'G':
+            A = pd.read_csv('output/kinship_additive.txt', sep='\t')
+            A = preprocess_g(A, 'A')
+            kinships.append(A)
+        else:
+            xtrain, xval = prepare_train_val_gxe('additive')
+            kroneckers_train.append(xtrain)
+            kroneckers_val.append(xval)
 
     if args.D:
-        print('Using D kinship matrix.')
-        D = pd.read_csv('output/kinship_dominant.txt', sep='\t')
-        D = preprocess(D, 'D')
-        kinships.append(D)
+        print('Using D matrix.')
         outfile += '_D'
+        if args.model == 'G':
+            D = pd.read_csv('output/kinship_dominant.txt', sep='\t')
+            D = preprocess_g(D, 'D')
+            kinships.append(D)
+        else:
+            xtrain, xval = prepare_train_val_gxe('dominant')
+            kroneckers_train.append(xtrain)
+            kroneckers_val.append(xval)
 
     if args.epiAA:
-        print('Using epi AA kinship matrix.')
-        epiAA = pd.read_csv('output/kinship_epi_AA.txt', sep='\t')
-        epiAA = preprocess(epiAA, 'epiAA')
-        kinships.append(epiAA)
+        print('Using epiAA matrix.')
         outfile += '_epiAA'
+        if args.model == 'G':
+            epiAA = pd.read_csv('output/kinship_epi_AA.txt', sep='\t')
+            epiAA = preprocess_g(epiAA, 'epi_AA')
+            kinships.append(epiAA)
+        else:
+            xtrain, xval = prepare_train_val_gxe('epi_AA')
+            kroneckers_train.append(xtrain)
+            kroneckers_val.append(xval)
 
     if args.epiDD:
-        print('Using epi DD kinship matrix.')
-        epiDD = pd.read_csv('output/kinship_epi_DD.txt', sep='\t')
-        epiDD = preprocess(epiDD, 'epiDD')
-        kinships.append(epiDD)
+        print('Using epiDD matrix.')
         outfile += '_epiDD'
+        if args.model == 'G':
+            epiDD = pd.read_csv('output/kinship_epi_DD.txt', sep='\t')
+            epiDD = preprocess_g(epiDD, 'epi_DD')
+            kinships.append(epiDD)
+        else:
+            xtrain, xval = prepare_train_val_gxe('epi_DD')
+            kroneckers_train.append(xtrain)
+            kroneckers_val.append(xval)
 
     if args.epiAD:
-        print('Using epi AD kinship matrix.')
-        epiAD = pd.read_csv('output/kinship_epi_AD.txt', sep='\t')
-        epiAD = preprocess(epiAD, 'epiAD')
-        kinships.append(epiAD)
+        print('Using epiAD matrix.')
         outfile += '_epiAD'
+        if args.model == 'G':
+            epiAD = pd.read_csv('output/kinship_epi_AD.txt', sep='\t')
+            epiAD = preprocess_g(epiAD, 'epi_AD')
+            kinships.append(epiAD)
+        else:
+            xtrain, xval = prepare_train_val_gxe('epi_AD')
+            kroneckers_train.append(xtrain)
+            kroneckers_val.append(xval)
 
     if len(kinships) == 0:
-        raise Exception('Choose at least one kinship matrix.')
-    else:
+        raise Exception('Choose at least one matrix.')
+    
+    # concat dataframes and bind target
+    if args.model == 'G':
         K = pd.concat(kinships, axis=1)
+        xtrain = pd.merge(ytrain, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
+        xval = pd.merge(yval, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
+    else:
+        xtrain = pd.concat(kroneckers_train, axis=1)
+        xtrain = xtrain.merge(ytrain, on=['Env', 'Hybrid'], how='inner')
+        xval = pd.concat(kroneckers_val, axis=1)
+        xval = xval.merge(yval, on=['Env', 'Hybrid'], how='inner')
 
-    # merge target and features
-    xtrain = pd.merge(ytrain, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
     ytrain = xtrain['Yield_Mg_ha']
     del xtrain['Yield_Mg_ha']
-    xval = pd.merge(yval, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
     yval = xval['Yield_Mg_ha']
     del xval['Yield_Mg_ha']
 
@@ -103,7 +161,7 @@ if __name__ == '__main__':
         print('# Features:', xtrain.shape[1])
 
         # fit
-        model = lgbm.LGBMRegressor(random_state=42, verbose=-1)
+        model = lgbm.LGBMRegressor(random_state=42)
         model.fit(xtrain, ytrain)
 
         # predict
@@ -112,6 +170,7 @@ if __name__ == '__main__':
         # validate
         df_eval = create_df_eval(xval, yval, ypred)
         _ = avg_rmse(df_eval)
+        
     else:
         lag_cols = [x for x in xtrain.columns if 'yield_lag' in x]
         xtrain_no_lags = xtrain.drop(lag_cols, axis=1)

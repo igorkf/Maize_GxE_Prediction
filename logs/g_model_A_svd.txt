@@ -1,4 +1,5 @@
-Using A kinship matrix.
+Using G model.
+Using A matrix.
 Using svd.
 # Components: 100
 Explained variance: 0.9985802284326133

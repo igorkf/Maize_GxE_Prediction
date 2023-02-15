@@ -1,6 +1,7 @@
-Using epi AA kinship matrix.
-Using epi DD kinship matrix.
-Using epi AD kinship matrix.
+Using G model.
+Using epiAA matrix.
+Using epiDD matrix.
+Using epiAD matrix.
 Using svd.
 # Components: 100
 Explained variance: 0.9403578809813418
