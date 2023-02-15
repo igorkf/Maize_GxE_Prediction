@@ -46,11 +46,11 @@ if __name__ == '__main__':
         'ytrue': yval,
         'yhat': yhat
     })
-    df_eval.to_csv('output/oof_solution_4th_sub.csv', index=False)
+    df_eval.to_csv('output/oof_e_model.csv', index=False)
 
     # predict on test
     df_sub['Yield_Mg_ha'] = model.predict(xtest)
-    df_sub.to_csv('output/submission_4th_sub.csv', index=False)
+    df_sub.to_csv('output/submission.csv', index=False)
     
     # evaluate
     rmse_per_field = df_eval.groupby('Field_Location').apply(
