@@ -129,7 +129,7 @@ if __name__ == '__main__':
             kroneckers_train.append(xtrain)
             kroneckers_val.append(xval)
 
-    if len(kinships) == 0:
+    if (args.model == 'G' and len(kinships) == 0) or (args.model == 'GxE' and len(kroneckers_train) == 0):
         raise Exception('Choose at least one matrix.')
     
     # concat dataframes and bind target
@@ -173,8 +173,8 @@ if __name__ == '__main__':
         
     else:
         lag_cols = [x for x in xtrain.columns if 'yield_lag' in x]
-        xtrain_no_lags = xtrain.drop(lag_cols, axis=1)
-        xval_no_lags = xval.drop(lag_cols, axis=1)
+        xtrain_no_lags = xtrain.drop(lag_cols, axis=1).set_index(['Env', 'Hybrid'])
+        xval_no_lags = xval.drop(lag_cols, axis=1).set_index(['Env', 'Hybrid'])
         outfile += f'_svd{args.n_components}comps'
         print('Using svd.')
         print('# Components:', args.n_components)
