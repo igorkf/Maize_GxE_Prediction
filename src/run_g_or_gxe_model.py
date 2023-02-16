@@ -20,7 +20,7 @@ parser.add_argument('--epiAA', action='store_true', default=False)
 parser.add_argument('--epiDD', action='store_true', default=False)
 parser.add_argument('--epiAD', action='store_true', default=False)
 parser.add_argument('--svd', action='store_true', default=False)
-parser.add_argument('--n_components', default=100)
+parser.add_argument('--n_components', type=int, default=100)
 args = parser.parse_args()
 
 
