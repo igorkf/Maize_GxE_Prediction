@@ -1,0 +1,7 @@
+Debug mode: FALSE 
+Using epi_DD matrix
+dataset: val 
+K dim: 31833 413952 
+K dim: 13596 413952 
+Writing file: output/kronecker_epi_DD_val.feather 
+

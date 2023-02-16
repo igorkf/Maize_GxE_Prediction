@@ -10,5 +10,6 @@ __pycache__/
 deprecated_*
 *.txt
 *.parquet
+*.feather
 !requirements.txt
 !logs/*

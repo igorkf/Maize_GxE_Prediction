@@ -1,0 +1,7 @@
+Debug mode: FALSE 
+Using epi_AA matrix
+dataset: train 
+K dim: 29350 413952 
+K dim: 11277 413952 
+Writing file: output/kronecker_epi_AA_train.feather 
+

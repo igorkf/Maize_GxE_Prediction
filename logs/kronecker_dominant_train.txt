@@ -1,0 +1,7 @@
+Debug mode: FALSE 
+Using dominant matrix
+dataset: train 
+K dim: 29350 413952 
+K dim: 11277 413952 
+Writing file: output/kronecker_dominant_train.feather 
+
