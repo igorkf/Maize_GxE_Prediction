@@ -41,7 +41,7 @@ cat("K dim:", dim(K), "\n")
 K <- K[rownames(K) %in% paste0(y$Env, ":", y$Hybrid), ]
 cat("K dim:", dim(K), "\n")
 
-# write to feather for fast reading
+# write to feather for fast reading (~3.5 min)
 arrow::write_feather(
   data.frame(id = rownames(K), K), 
   outfile,

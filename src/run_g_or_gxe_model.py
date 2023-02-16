@@ -45,16 +45,16 @@ def preprocess_g(df, kinship):
 
 def preprocess_gxe(df, year, kinship):
     df[['Env', 'Hybrid']] = df['id'].str.split(':', expand=True)
-    df['Env'] += '_' + str(year)
+    df['Env'] += f'_{year}'
     df = df.drop('id', axis=1).set_index(['Env', 'Hybrid'])
     df.columns = [f'{x}_{kinship}' for x in df.columns]
     return df
 
 
 def prepare_train_val_gxe(kinship):
-    xtrain = pd.read_parquet(f'output/kronecker_{kinship}_train.parquet')
+    xtrain = pd.read_feather(f'output/kronecker_{kinship}_train.feather')
     xtrain = preprocess_gxe(xtrain, year=TRAIN_YEAR, kinship=kinship)
-    xval = pd.read_parquet(f'output/kronecker_{kinship}_val.parquet')
+    xval = pd.read_feather(f'output/kronecker_{kinship}_val.feather')
     xval = preprocess_gxe(xval, year=VAL_YEAR, kinship=kinship)
     return xtrain, xval
 
@@ -137,25 +137,31 @@ if __name__ == '__main__':
         K = pd.concat(kinships, axis=1)
         xtrain = pd.merge(ytrain, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
         xval = pd.merge(yval, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
+        del kinships
     else:
         xtrain = pd.concat(kroneckers_train, axis=1)
         xtrain = xtrain.merge(ytrain, on=['Env', 'Hybrid'], how='inner')
         xval = pd.concat(kroneckers_val, axis=1)
         xval = xval.merge(yval, on=['Env', 'Hybrid'], how='inner')
+        del kroneckers_train, kroneckers_val
 
+    # split x, y
     ytrain = xtrain['Yield_Mg_ha']
     del xtrain['Yield_Mg_ha']
     yval = xval['Yield_Mg_ha']
     del xval['Yield_Mg_ha']
 
     # bind lagged yield features
+    no_lags_cols = [x for x in xtrain.columns.tolist() if x not in ['Env', 'Hybrid']]
     xtrain_lag = pd.read_csv('output/xtrain.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
     xval_lag = pd.read_csv('output/xval.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-    xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
-    xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
+    xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner').set_index(['Env', 'Hybrid'])
+    xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner').set_index(['Env', 'Hybrid'])
     
     # run model
     if not args.svd:
+        del xtrain_lag, xval_lag
+
         outfile += '_full'
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
@@ -172,24 +178,22 @@ if __name__ == '__main__':
         _ = avg_rmse(df_eval)
         
     else:
-        lag_cols = [x for x in xtrain.columns if 'yield_lag' in x]
-        xtrain_no_lags = xtrain.drop(lag_cols, axis=1).set_index(['Env', 'Hybrid'])
-        xval_no_lags = xval.drop(lag_cols, axis=1).set_index(['Env', 'Hybrid'])
         outfile += f'_svd{args.n_components}comps'
         print('Using svd.')
         print('# Components:', args.n_components)
         svd = TruncatedSVD(n_components=args.n_components, random_state=42)
-        svd.fit(xtrain_no_lags)  # fit but without lagged yield features
+        svd.fit(xtrain[no_lags_cols])  # fit but without lagged yield features
         print('Explained variance:', svd.explained_variance_ratio_.sum())
 
         # transform from the fitted svd
         svd_cols = [f'svd{i}' for i in range(args.n_components)]
-        xtrain_svd = pd.DataFrame(svd.transform(xtrain_no_lags), columns=svd_cols, index=xtrain_no_lags.index)
-        xval_svd = pd.DataFrame(svd.transform(xval_no_lags), columns=svd_cols, index=xval_no_lags.index)
+        xtrain_svd = pd.DataFrame(svd.transform(xtrain[no_lags_cols]), columns=svd_cols, index=xtrain[no_lags_cols].index)
+        xval_svd = pd.DataFrame(svd.transform(xval[no_lags_cols]), columns=svd_cols, index=xval[no_lags_cols].index)
 
         # bind lagged yield features
         xtrain = xtrain_svd.merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
         xval = xval_svd.merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
+        del xtrain_lag, xval_lag
 
     # tune model if using svd features
     if args.svd:
