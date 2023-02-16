@@ -1,5 +1,4 @@
 import lightgbm as lgbm
-import optuna
 
 from evaluate import create_df_eval, avg_rmse
 

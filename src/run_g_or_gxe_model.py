@@ -205,13 +205,14 @@ if __name__ == '__main__':
             study = optuna.create_study(direction='minimize', sampler=optuna.samplers.TPESampler(seed=42))
             func = lambda trial: objective(trial, xtrain, ytrain, xval, yval)
             study.optimize(func, n_trials=200)
-            print('# Trials:', len(study.trials))
-            print('Best trial:', study.best_trial.params)
-            print('Best RMSE:', study.best_value)
 
             # fit again with best parameters
             model = lgbm.LGBMRegressor(**study.best_trial.params, random_state=42)
             model.fit(xtrain, ytrain)
+            
+        print('# Trials:', len(study.trials))
+        print('Best trial:', study.best_trial.params)
+        print('Best RMSE:', study.best_value)
 
         # predict
         ypred = model.predict(xval)
