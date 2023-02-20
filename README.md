@@ -2,7 +2,7 @@
 
 #### Download the data
 
-Download the data [here](https://drive.google.com/drive/folders/1leYJY4bA3341S-JxjBIgmmAWMwVDHYRb), extract it, and put both `Training_Data` and `Testing_Data` folders on the `data` folder.
+Download the data [here](https://drive.google.com/drive/folders/1leYJY4bA3341S-JxjBIgmmAWMwVDHYRb), extract it, and put both `Training_Data` and `Testing_Data` folders on the `data` folder. Unzip the vcf file too.
 
 #### Setup conda and R packages
 
@@ -20,7 +20,7 @@ conda env create -f environment.yml
 
 Activate the conda environment:
 ```
-conda deactivate
+conda deactivate  # if base conda is activated
 conda activate maize_gxe_prediction
 ```
 
@@ -38,23 +38,23 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES", build_vignettes = 
 
 #### Run models
 
-- Environment model:
+##### Environment model:
 ```
 ./run_e_models.sh
 ```
 
-- Genetics models:
+##### Genetic models:
 ```
 ./run_g_models.sh
 ```
 
-- GxE models:
-Create kinships matrices:
+##### GxE models:
+Create kinships matrices (you will need `vcftools` and `plink` here):
 ```
 ./run_kinships.sh
 ```
 
-- Create kronecker matrices:
+Create kronecker matrices:
 ```
 ./run_kroneckers.sh
 ```
