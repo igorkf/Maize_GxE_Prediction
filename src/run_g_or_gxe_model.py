@@ -155,8 +155,12 @@ if __name__ == '__main__':
     no_lags_cols = [x for x in xtrain.columns.tolist() if x not in ['Env', 'Hybrid']]
     xtrain_lag = pd.read_csv('output/xtrain.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
     xval_lag = pd.read_csv('output/xval.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-    xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner').set_index(['Env', 'Hybrid'])
-    xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner').set_index(['Env', 'Hybrid'])
+    xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
+    xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
+    
+    if args.model == 'GxE':
+        xtrain = xtrain.set_index(['Env', 'Hybrid'])
+        xval = xval.set_index(['Env', 'Hybrid'])
     
     # run model
     if not args.svd:
