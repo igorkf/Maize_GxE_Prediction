@@ -11,4 +11,5 @@ __pycache__/
 *.parquet
 *.feather
 *.log
+maize_pruned*
 !logs/*
