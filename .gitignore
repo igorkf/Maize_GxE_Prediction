@@ -1,15 +1,14 @@
 .vscode
 .ipynb_checkpoints/
-notebooks/
+notebooks_cluster/
 __pycache__/
 *.csv
 *.docx
 *.zip
 *.vcf
 .venv
-deprecated_*
 *.txt
 *.parquet
 *.feather
-!requirements.txt
+*.log
 !logs/*

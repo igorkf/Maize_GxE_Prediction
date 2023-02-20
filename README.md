@@ -27,9 +27,9 @@ conda activate maize_gxe_prediction
 Set up R packages:
 ```
 # from CRAN
+install.packages("devtools")
 install.packages("data.table")
 install.packages("arrow")
-install.packages("devtools")
 
 # from github source
 setRepositories(ind = 1:2)
@@ -38,21 +38,25 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES", build_vignettes = 
 
 #### Run models
 
-Environment model:
+- Environment model:
 ```
 ./run_e_models.sh
 ```
 
-Genetics models:
+- Genetics models:
 ```
 ./run_g_models.sh
 ```
 
-GxE models:
-
-First, create kronecker matrices:
+- GxE models:
+Create kinships matrices:
 ```
-Rscript src/kronecker.R
+./run_kinships.sh
+```
+
+- Create kronecker matrices:
+```
+./run_kroneckers.sh
 ```
 
 Now run the models:
