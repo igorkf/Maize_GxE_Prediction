@@ -4,6 +4,9 @@ Using svd.
 # Components: 100
 Explained variance: 0.9420921446246031
 Tunning.
+# Trials: 200
+Best trial: {'feature_fraction': 0.09615443968822342, 'num_leaves': 161, 'bagging_fraction': 0.4775172800601109, 'lambda_l1': 3.5997084716255346e-06, 'lambda_l2': 9.75984707620993e-07, 'n_estimators': 82, 'max_depth': 5}
+Best RMSE: 2.1529706654944643
 Env
 COH1_2021    3.209502
 DEH1_2021    1.759400
