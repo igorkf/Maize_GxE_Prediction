@@ -51,6 +51,7 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES", build_vignettes = 
 ##### GxE models:
 Create kinships matrices (you will need `vcftools` and `plink` here):
 ```
+./run_vcf_filtering.sh
 ./run_kinships.sh
 ```
 
