@@ -6,16 +6,16 @@ library(simplePHENOTYPES)
 library(data.table)
 library(AGHmatrix)
 
-args <- commandArgs(trailingOnly = TRUE)
-vcftools_path <- args[1]
-plink_path <- args[2]
+# args <- commandArgs(trailingOnly = TRUE)
+# vcftools_path <- args[1]
+# plink_path <- args[2]
 
 # using vcftools to remove snps with minor allele count 1%
-system(paste0(vcftools_path, " --vcf data/Training_Data/5_Genotype_Data_All_Years.vcf --maf 0.01 --recode --recode-INFO-all --out output/maize_maf001"))
+# system(paste0(vcftools_path, " --vcf data/Training_Data/5_Genotype_Data_All_Years.vcf --maf 0.01 --recode --recode-INFO-all --out output/maize_maf001"))
 
 # using plink to prune SNPs with LD > 0.9 (in a window of 100 SNPs)
-system(paste0(plink_path, " --vcf output/maize_maf001.recode.vcf --double-id --indep-pairwise 100 20 0.9 --out output/maize_pruned"))
-system(paste0(plink_path, " --vcf output/maize_maf001.recode.vcf --double-id --extract output/maize_pruned.prune.in --recode vcf --out output/maize_pruned"))
+# system(paste0(plink_path, " --vcf output/maize_maf001.recode.vcf --double-id --indep-pairwise 100 20 0.9 --out output/maize_pruned"))
+# system(paste0(plink_path, " --vcf output/maize_maf001.recode.vcf --double-id --extract output/maize_pruned.prune.in --recode vcf --out output/maize_pruned"))
 
 # converting from vcf to numeric...some files can be removed afterwards (only look at the *_numeric.txt file)
 create_phenotypes(
@@ -26,14 +26,14 @@ create_phenotypes(
   rep = 10,
   h2 = 0.7,
   model = "A",
-  home_dir = paste0(getwd(), "/output"),
+  home_dir = getwd(),
   out_geno = "numeric",
 )
 
 #loading the numeric file
 #SNPs are -1, 0, or 1
-dt_num <- fread("output/maize_pruned_numeric.txt", data.table = F)
-dt_num[1:10, 1:10]
+dt_num <- fread("maize_pruned_numeric.txt", data.table = F)
+dt_num[1:5, 1:5]
 
 # the package AGHmatrix requires SNPs to be 0, 1, or 2
 # transposing to have individuals in rows and SNPs in columns
@@ -45,28 +45,28 @@ kin_A <- Gmatrix(dt)
 
 # saving additive matrix to file
 fwrite(kin_A, "output/kinship_additive.txt", sep = "\t", quote = F)
-print("kinship A ok")
+cat("kinship A ok\n")
 
 # using the AGHmatrix package to create a dominant relationship matrix
 kin_d <- Gmatrix(dt, "Vitezica")
 
 # saving additive matrix to file
 fwrite(kin_d, "output/kinship_dominant.txt", sep = "\t", quote = F)
-print("kinship D ok")
+cat("kinship D ok\n")
 
 # creating epistatic relationship matrices
 # Additive x Additive
 kin_AA <- kin_A * kin_A
 fwrite(kin_AA, "output/kinship_epi_AA.txt", sep = "\t", quote = F)
-print("kinship epi AA ok")
+cat("kinship epi AA ok\n")
 
 # Dominante x Dominant
 kin_DD <- kin_d * kin_d
 fwrite(kin_DD, "output/kinship_epi_DD.txt", sep = "\t", quote = F)
-print("kinship epi DD ok")
+cat("kinship epi DD ok\n")
 
 # Additive x Dominant
 kin_AD <- kin_A * kin_d
 fwrite(kin_AD, "output/kinship_epi_AD.txt", sep = "\t", quote = F)
-print("kinship epi AD ok")
+cat("kinship epi AD ok\n")
 
