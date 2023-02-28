@@ -1,12 +1,12 @@
-### How to reproduce the results
+## How to reproduce the results
 
-#### Download the data
+### Download the data
 
 Download the data [here](https://drive.google.com/drive/folders/1leYJY4bA3341S-JxjBIgmmAWMwVDHYRb), extract it, and put both `Training_Data` and `Testing_Data` folders on the `data` folder. Unzip the vcf file too.
 
-#### Setup conda and R packages
-
-We runned the models in a cluster, so you can skip this chunk of code:   
+We runned the models in a cluster, so you can skip the next hidden block: 
+<details>
+<summary>Click to expand</summary>
 
 ```
 module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools plink
@@ -20,7 +20,11 @@ cat ~/.Rprofile
 cat ~/.Renviron 
 # R_LIBS_USER=~/R/%p/%v
 ```
+</details>
 
+<br>
+
+### Setup R packages and conda
 Install R packages:
 ```
 # from CRAN
@@ -44,14 +48,14 @@ conda deactivate  # if base conda is activated
 conda activate maize_gxe_prediction
 ```
 
-#### Preprocessing vcf
+### Preprocessing vcf
 Create kinships matrices (you will need `vcftools` and `plink` here):
 ```
 ./run_vcf_filtering.sh
 ./run_kinships.sh
 ```
 
-#### Run models
+### Run models
 Run CV0:   
 ```
 ./run_cv.sh 0
