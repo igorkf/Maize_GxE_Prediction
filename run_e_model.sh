@@ -1,2 +1,2 @@
-python3 src/create_datasets.py > logs/datasets.txt &&
-python3 src/run_e_model.py > logs/e_model.txt
+python3 -u src/run_e_model.py > logs/e_model.txt &&
+echo '[E] model ok'
