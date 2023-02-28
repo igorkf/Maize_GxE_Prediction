@@ -1,7 +1,0 @@
-Debug mode: FALSE 
-Using additive matrix
-dataset: train 
-K dim: 29350 413952 
-K dim: 11277 413952 
-Writing file: output/kronecker_additive_train.feather 
-
