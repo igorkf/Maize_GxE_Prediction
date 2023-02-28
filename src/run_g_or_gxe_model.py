@@ -79,7 +79,9 @@ if __name__ == '__main__':
         else:
             xtrain, xval = prepare_train_val_gxe('additive')
             kroneckers_train.append(xtrain)
+            del xtrain
             kroneckers_val.append(xval)
+            del xval
 
     if args.D:
         print('Using D matrix.')
@@ -91,7 +93,9 @@ if __name__ == '__main__':
         else:
             xtrain, xval = prepare_train_val_gxe('dominant')
             kroneckers_train.append(xtrain)
+            del xtrain
             kroneckers_val.append(xval)
+            del xval
 
     if args.epiAA:
         print('Using epiAA matrix.')
@@ -103,7 +107,9 @@ if __name__ == '__main__':
         else:
             xtrain, xval = prepare_train_val_gxe('epi_AA')
             kroneckers_train.append(xtrain)
+            del xtrain
             kroneckers_val.append(xval)
+            del xval
 
     if args.epiDD:
         print('Using epiDD matrix.')
@@ -114,7 +120,9 @@ if __name__ == '__main__':
             kinships.append(epiDD)
         else:
             xtrain, xval = prepare_train_val_gxe('epi_DD')
+            del xtrain
             kroneckers_train.append(xtrain)
+            del xval
             kroneckers_val.append(xval)
 
     if args.epiAD:
@@ -127,7 +135,9 @@ if __name__ == '__main__':
         else:
             xtrain, xval = prepare_train_val_gxe('epi_AD')
             kroneckers_train.append(xtrain)
+            del xtrain
             kroneckers_val.append(xval)
+            del xval
 
     if (args.model == 'G' and len(kinships) == 0) or (args.model == 'GxE' and len(kroneckers_train) == 0):
         raise Exception('Choose at least one matrix.')
