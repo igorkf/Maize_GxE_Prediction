@@ -9,7 +9,7 @@ We runned the models in a cluster, so you can skip the next hidden block:
 <summary>Click to expand</summary>
 
 ```
-module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools plink
+module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools/0.1.15 plink/1.90b6.10
 module load python/anaconda-3.10
 source /share/apps/bin/conda-3.10.sh
 
@@ -52,6 +52,8 @@ conda activate maize_gxe_prediction
 Create kinships matrices (you will need `vcftools` and `plink` here):
 ```
 ./run_vcf_filtering.sh
+```
+```
 ./run_kinships.sh
 ```
 
