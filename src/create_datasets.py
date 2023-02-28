@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 import pandas as pd
 from sklearn.decomposition import TruncatedSVD
@@ -20,14 +21,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, choices={0, 1, 2})
 args = parser.parse_args()
 
-
 if args.cv == 0:
     print('Using CV0')
     YTRAIN_YEAR = 2020
     YVAL_YEAR = 2021
     YTEST_YEAR = 2022
-    
 
+OUTPUT_PATH = Path(f'output/cv{args.cv}')
 TRAIT_PATH = 'data/Training_Data/1_Training_Trait_Data_2014_2021.csv'
 TEST_PATH = 'data/Testing_Data/1_Submission_Template_2022.csv'
 META_TRAIN_PATH = 'data/Training_Data/2_Training_Meta_Data_2014_2021.csv'
@@ -173,8 +173,8 @@ if __name__ == '__main__':
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
     # write datasets
-    xtrain.reset_index().to_csv('output/xtrain.csv', index=False)
-    xval.reset_index().to_csv('output/xval.csv', index=False)
-    xtest.reset_index().to_csv('output/xtest.csv', index=False)
-    ytrain.reset_index().to_csv('output/ytrain.csv', index=False)
-    yval.reset_index().to_csv('output/yval.csv', index=False)
+    xtrain.reset_index().to_csv(OUTPUT_PATH / 'xtrain.csv', index=False)
+    xval.reset_index().to_csv(OUTPUT_PATH / 'xval.csv', index=False)
+    xtest.reset_index().to_csv(OUTPUT_PATH / 'xtest.csv', index=False)
+    ytrain.reset_index().to_csv(OUTPUT_PATH / 'ytrain.csv', index=False)
+    yval.reset_index().to_csv(OUTPUT_PATH / 'yval.csv', index=False)

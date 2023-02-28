@@ -44,7 +44,6 @@ conda deactivate  # if base conda is activated
 conda activate maize_gxe_prediction
 ```
 
-
 #### Preprocessing vcf
 Create kinships matrices (you will need `vcftools` and `plink` here):
 ```
@@ -53,24 +52,7 @@ Create kinships matrices (you will need `vcftools` and `plink` here):
 ```
 
 #### Run models
-
-##### Environment model:
+Run CV0:   
 ```
-./run_e_models.sh
-```
-
-##### Genetic models:
-```
-./run_g_models.sh
-```
-
-##### GxE models:
-Create kronecker matrices:
-```
-./run_kroneckers.sh
-```
-
-Now run the models:
-```
-./run_gxe_models.sh
+./run_cv.sh 0
 ```

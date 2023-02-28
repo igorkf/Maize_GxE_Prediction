@@ -1,11 +1,18 @@
+import argparse
+from pathlib import Path
+
 import pandas as pd
 import lightgbm as lgbm
-from sklearn.metrics import mean_squared_error
 
 from preprocessing import process_test_data
 from evaluate import create_df_eval, avg_rmse
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--cv', type=int, choices={0, 1, 2})
+args = parser.parse_args()
+
+OUTPUT_PATH = Path(f'output/cv{args.cv}')
 TRAIT_PATH = 'data/Training_Data/1_Training_Trait_Data_2014_2021.csv'
 TEST_PATH = 'data/Testing_Data/1_Submission_Template_2022.csv'
 META_TRAIN_PATH = 'data/Training_Data/2_Training_Meta_Data_2014_2021.csv'
@@ -15,11 +22,11 @@ META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 if __name__ == '__main__':
     df_sub = process_test_data(TEST_PATH).reset_index()[['Env', 'Hybrid']]
 
-    xtrain = pd.read_csv('output/xtrain.csv')
-    xval = pd.read_csv('output/xval.csv')
-    xtest = pd.read_csv('output/xtest.csv')
-    ytrain = pd.read_csv('output/ytrain.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
-    yval = pd.read_csv('output/yval.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
+    xtrain = pd.read_csv(OUTPUT_PATH / 'xtrain.csv')
+    xval = pd.read_csv(OUTPUT_PATH / 'xval.csv')
+    xtest = pd.read_csv(OUTPUT_PATH / 'xtest.csv')
+    ytrain = pd.read_csv(OUTPUT_PATH / 'ytrain.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
+    yval = pd.read_csv(OUTPUT_PATH / 'yval.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
 
     # set index
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
@@ -46,8 +53,8 @@ if __name__ == '__main__':
     _ = avg_rmse(df_eval)
 
     # write
-    outfile = 'output/oof_e_model.csv'
-    print('Writing:', outfile)
+    outfile = OUTPUT_PATH / 'oof_e_model.csv'
+    print('Writing:', outfile, '\n')
     df_eval.to_csv(outfile, index=False)
 
     # predict on test
