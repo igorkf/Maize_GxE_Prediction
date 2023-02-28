@@ -1,3 +1,5 @@
+import argparse
+
 import pandas as pd
 from sklearn.decomposition import TruncatedSVD
 
@@ -13,9 +15,18 @@ from preprocessing import (
     extract_target
 )
 
-YTRAIN_YEAR = 2020
-YVAL_YEAR = 2021
-YTEST_YEAR = 2022
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--cv', type=int, choices={0, 1, 2})
+args = parser.parse_args()
+
+
+if args.cv == 0:
+    print('Using CV0')
+    YTRAIN_YEAR = 2020
+    YVAL_YEAR = 2021
+    YTEST_YEAR = 2022
+    
 
 TRAIT_PATH = 'data/Training_Data/1_Training_Trait_Data_2014_2021.csv'
 TEST_PATH = 'data/Testing_Data/1_Submission_Template_2022.csv'
@@ -71,11 +82,6 @@ if __name__ == '__main__':
     xval = xval.merge(weather_feats, on='Env', how='left')
     xtest = xtest.merge(weather_test_feats, on='Env', how='left')
 
-    # save weather features to disk
-    weather_feats[weather_feats.index.isin(xtrain['Env'])].reset_index().to_csv('output/train_weather_features.csv', index=False)
-    weather_feats[weather_feats.index.isin(xval['Env'])].reset_index().to_csv('output/val_weather_features.csv', index=False)
-    weather_test_feats.reset_index().to_csv('output/test_weather_features.csv', index=False)
-
     # feat eng (soil)
     xtrain = xtrain.merge(feat_eng_soil(soil), on='Env', how='left')
     xval = xval.merge(feat_eng_soil(soil), on='Env', how='left')
@@ -123,6 +129,19 @@ if __name__ == '__main__':
     print('lat/lon unique bins:')
     print('lat:', sorted(set(xtrain['weather_station_lat'].unique())))
     print('lon:', sorted(set(xtrain['weather_station_lon'].unique())))
+
+    vcfed_hybrids = pd.read_csv('data/Training_Data/All_hybrid_names_info.csv')
+    vcfed_hybrids = vcfed_hybrids[vcfed_hybrids['vcf'] == True]['Hybrid']
+
+    # known hybrids
+    if args.cv == 0:
+        print('# rows xtrain before pruning:', len(xtrain))
+        print('# rows xval before pruning:', len(xval))
+        known_hybrids = set(vcfed_hybrids) & set(xtrain['Hybrid']) & set(xval['Hybrid'])
+        xtrain = xtrain[xtrain['Hybrid'].isin(known_hybrids)]
+        xval = xval[xval['Hybrid'].isin(known_hybrids)]
+        print('# rows xtrain after pruning:', len(xtrain))
+        print('# rows xval after pruning:', len(xval))
 
     # set index
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
