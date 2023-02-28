@@ -12,4 +12,3 @@ __pycache__/
 *.feather
 *.log
 maize_pruned*
-!logs/*
