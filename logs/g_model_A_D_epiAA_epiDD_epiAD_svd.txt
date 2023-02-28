@@ -1,0 +1,45 @@
+Using G model.
+Using A matrix.
+Using D matrix.
+Using epiAA matrix.
+Using epiDD matrix.
+Using epiAD matrix.
+Using svd.
+# Components: 100
+Explained variance: 0.9829611357637059
+Tunning.
+# Trials: 200
+Best trial: {'feature_fraction': 0.0970123528475635, 'num_leaves': 110, 'bagging_fraction': 0.5434122151805979, 'lambda_l1': 0.000607870893113499, 'lambda_l2': 0.00016942447684692783, 'n_estimators': 67, 'max_depth': 6}
+Best RMSE: 2.153031471009981
+Env
+COH1_2021    2.940417
+DEH1_2021    1.815937
+GAH1_2021    2.043323
+GAH2_2021    2.376976
+GEH1_2021    2.397942
+IAH1_2021    2.083571
+IAH2_2021    1.355941
+IAH3_2021    1.990931
+IAH4_2021    1.403571
+ILH1_2021    1.601716
+INH1_2021    1.623423
+MIH1_2021    1.251249
+MNH1_2021    1.420069
+NCH1_2021    1.669126
+NEH1_2021    3.213699
+NEH2_2021    1.965190
+NEH3_2021    3.132313
+NYH2_2021    2.549422
+NYH3_2021    1.595842
+NYS1_2021    2.344650
+SCH1_2021    2.385830
+TXH1_2021    1.711769
+TXH2_2021    1.829228
+TXH3_2021    4.683995
+WIH1_2021    2.445557
+WIH2_2021    2.699078
+WIH3_2021    1.601083
+dtype: float64
+RMSE: 2.153031471009981
+Writing file: output/oof_g_model_A_D_epiAA_epiDD_epiAD_svd100comps.csv 
+
