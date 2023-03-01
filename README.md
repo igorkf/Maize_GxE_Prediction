@@ -9,7 +9,7 @@ We runned the models in a cluster, so you can skip the next hidden block:
 <summary>Click to expand</summary>
 
 ```
-module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools/0.1.15 plink/1.90b6.10
+module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools/0.1.15 plink/5.2
 module load python/anaconda-3.10
 source /share/apps/bin/conda-3.10.sh
 
@@ -31,6 +31,7 @@ Install R packages:
 install.packages("devtools")
 install.packages("data.table")
 install.packages("arrow")
+install.packages("AGHmatrix")
 
 # from github source
 setRepositories(ind = 1:2)
@@ -62,3 +63,5 @@ Run CV0:
 ```
 ./run_cv.sh 0
 ```
+
+Some files are big so you might want to exclude them.
