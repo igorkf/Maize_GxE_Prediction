@@ -1,11 +1,11 @@
 import argparse
 import os
 import contextlib
+from pathlib import Path
 
 import pandas as pd
 import lightgbm as lgbm
 from sklearn.decomposition import TruncatedSVD
-from sklearn.metrics import mean_squared_error
 import optuna
 
 from evaluate import create_df_eval, avg_rmse
@@ -13,6 +13,7 @@ from tune import objective
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--cv', type=int, choices={0, 1, 2})
 parser.add_argument('--model', choices={'G', 'GxE'})
 parser.add_argument('--A', action='store_true', default=False)
 parser.add_argument('--D', action='store_true', default=False)
@@ -23,14 +24,16 @@ parser.add_argument('--svd', action='store_true', default=False)
 parser.add_argument('--n_components', type=int, default=100)
 args = parser.parse_args()
 
+OUTPUT_PATH = Path(f'output/cv{args.cv}')
 
 if args.model == 'G':
-    outfile = 'output/oof_g_model'
+    outfile = OUTPUT_PATH / 'oof_g_model'
     print('Using G model.')
 else:
     print('Using GxE model.')
-    outfile = 'output/oof_gxe_model'
+    outfile = OUTPUT_PATH / 'oof_gxe_model'
 
+# TODO: deal with other cases (CV1 and CV2)
 TRAIN_YEAR = 2020
 VAL_YEAR = 2021
 
@@ -62,8 +65,8 @@ def prepare_train_val_gxe(kinship):
 if __name__ == '__main__':
     
     # load targets
-    ytrain = pd.read_csv('output/ytrain.csv')
-    yval = pd.read_csv('output/yval.csv')
+    ytrain = pd.read_csv(OUTPUT_PATH / 'ytrain.csv')
+    yval = pd.read_csv(OUTPUT_PATH / 'yval.csv')
 
     # load kinships or kroneckers
     kinships = []
@@ -71,7 +74,7 @@ if __name__ == '__main__':
     kroneckers_val = []
     if args.A:
         print('Using A matrix.')
-        outfile += '_A'
+        outfile = f'{outfile}_A'
         if args.model == 'G':
             A = pd.read_csv('output/kinship_additive.txt', sep='\t')
             A = preprocess_g(A, 'A')
@@ -85,7 +88,7 @@ if __name__ == '__main__':
 
     if args.D:
         print('Using D matrix.')
-        outfile += '_D'
+        outfile = f'{outfile}_D'
         if args.model == 'G':
             D = pd.read_csv('output/kinship_dominant.txt', sep='\t')
             D = preprocess_g(D, 'D')
@@ -99,7 +102,7 @@ if __name__ == '__main__':
 
     if args.epiAA:
         print('Using epiAA matrix.')
-        outfile += '_epiAA'
+        outfile = f'{outfile}_epiAA'
         if args.model == 'G':
             epiAA = pd.read_csv('output/kinship_epi_AA.txt', sep='\t')
             epiAA = preprocess_g(epiAA, 'epi_AA')
@@ -113,7 +116,7 @@ if __name__ == '__main__':
 
     if args.epiDD:
         print('Using epiDD matrix.')
-        outfile += '_epiDD'
+        outfile = f'{outfile}_epiDD'
         if args.model == 'G':
             epiDD = pd.read_csv('output/kinship_epi_DD.txt', sep='\t')
             epiDD = preprocess_g(epiDD, 'epi_DD')
@@ -127,7 +130,7 @@ if __name__ == '__main__':
 
     if args.epiAD:
         print('Using epiAD matrix.')
-        outfile += '_epiAD'
+        outfile = f'{outfile}_epiAD'
         if args.model == 'G':
             epiAD = pd.read_csv('output/kinship_epi_AD.txt', sep='\t')
             epiAD = preprocess_g(epiAD, 'epi_AD')
@@ -163,8 +166,8 @@ if __name__ == '__main__':
 
     # bind lagged yield features
     no_lags_cols = [x for x in xtrain.columns.tolist() if x not in ['Env', 'Hybrid']]
-    xtrain_lag = pd.read_csv('output/xtrain.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-    xval_lag = pd.read_csv('output/xval.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+    xtrain_lag = pd.read_csv(OUTPUT_PATH / 'xtrain.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+    xval_lag = pd.read_csv(OUTPUT_PATH / 'xval.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
     xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
     xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
     
@@ -176,7 +179,7 @@ if __name__ == '__main__':
     if not args.svd:
         del xtrain_lag, xval_lag
 
-        outfile += '_full'
+        outfile = f'{outfile}_full'
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
 
@@ -192,7 +195,7 @@ if __name__ == '__main__':
         _ = avg_rmse(df_eval)
         
     else:
-        outfile += f'_svd{args.n_components}comps'
+        outfile = f'{outfile}_svd{args.n_components}comps'
         print('Using svd.')
         print('# Components:', args.n_components)
         svd = TruncatedSVD(n_components=args.n_components, random_state=42)
@@ -236,6 +239,6 @@ if __name__ == '__main__':
         _ = avg_rmse(df_eval)
 
     # write OOF results
-    outfile += '.csv'
+    outfile = f'{outfile}.csv'
     print('Writing file:', outfile, '\n')
     df_eval.to_csv(outfile, index=False)

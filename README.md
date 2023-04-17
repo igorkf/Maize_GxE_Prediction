@@ -24,7 +24,18 @@ cat ~/.Renviron
 
 <br>
 
-### Setup R packages and conda
+### Setup conda and R packages
+Install the conda environment:
+```
+conda env create -f environment.yml
+```
+
+Activate the conda environment:
+```
+conda deactivate  # if base conda is activated
+conda activate maize_gxe_prediction
+```
+
 Install R packages:
 ```
 # from CRAN
@@ -38,16 +49,6 @@ setRepositories(ind = 1:2)
 devtools::install_github("samuelbfernandes/simplePHENOTYPES", build_vignettes = TRUE)
 ```
 
-Now install the conda environment (only first time):
-```
-conda env create -f environment.yml
-```
-
-Activate the conda environment:
-```
-conda deactivate  # if base conda is activated
-conda activate maize_gxe_prediction
-```
 
 ### Preprocessing vcf
 Create kinships matrices (you will need `vcftools` and `plink` here):

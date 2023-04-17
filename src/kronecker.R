@@ -1,6 +1,5 @@
 library(data.table)
 
-# generate files for each combination
 args <- commandArgs(trailingOnly = TRUE)
 cv <- args[1]  # 1, 2, or 3
 debug <- as.logical(args[2])  # FALSE or TRUE  (for debugging set to TRUE)
