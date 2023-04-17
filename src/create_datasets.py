@@ -8,8 +8,8 @@ from preprocessing import (
     process_metadata,
     process_test_data,
     lat_lon_to_bin,
-    split_trait_data,
-    feature_engineer,
+    split_train_val,
+    agg_yield,
     feat_eng_weather,
     feat_eng_soil,
     feat_eng_target,
@@ -68,12 +68,12 @@ if __name__ == '__main__':
     ec_test = pd.read_csv('data/Testing_Data/6_Testing_EC_Data_2022.csv').set_index('Env')
 
     # split train/val
-    xtrain, xval = split_trait_data(trait, val_year=YVAL_YEAR, fillna=False)
+    xtrain, xval = split_train_val(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
 
-    # feat eng (trait)
-    xtrain = feature_engineer(xtrain)
-    xval = feature_engineer(xval)
-    xtest = feature_engineer(xtest)
+    # agg yield
+    xtrain = agg_yield(xtrain)
+    xval = agg_yield(xval)
+    xtest = agg_yield(xtest)
 
     # feat eng (weather)
     weather_feats = feat_eng_weather(weather)

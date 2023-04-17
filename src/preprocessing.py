@@ -27,7 +27,7 @@ def lat_lon_to_bin(x, step: float):
         return x
 
 
-def feature_engineer(df: pd.DataFrame):
+def agg_yield(df: pd.DataFrame):
     df_agg = (
         df
         .groupby(['Env', 'Hybrid'])  # hybrid is here only to not lose the reference
@@ -119,16 +119,29 @@ def extract_target(df: pd.DataFrame):
     return y
 
 
-def split_trait_data(df: pd.DataFrame, val_year: int, fillna: bool = False):
+def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False):
     '''
     Targets with NA are due to discarded plots (accordingly with Cyverse data)
     TODO: discard or impute?
+    Reference: "Genome-enabled Prediction Accuracies Increased by Modeling Genotype x Environment Interaction in Durum Wheat (Sukumaran, 2017)
     '''
 
     if fillna:
         raise NotImplementedError('"fillna" is not implemented.')
+    
+    assert cv in {0, 1, 2}, 'Select cv = 0, 1, or 2.'
+    
+    # train in known genotypes, predict in unknown year
+    if cv == 0:
+        train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
+        val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
 
-    train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
-    val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
+    # train in known year, predict in unknown genotypes
+    elif cv == 1:
+        pass
+
+    # 
+    elif cv == 2:
+        pass
     
     return train, val
