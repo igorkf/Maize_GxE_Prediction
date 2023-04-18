@@ -95,19 +95,20 @@ def feat_eng_soil(df: pd.DataFrame):
     return df_agg
 
 
-def feat_eng_target(df: pd.DataFrame, ref_year: int, lag: int):
+def feat_eng_target(df: pd.DataFrame, ref_year: list, lag: int):
     assert lag >= 1
     df_year = df[df['Year'] <= ref_year - lag]
+    col = f'yield_lag_{lag}'
     df_agg = (
         df_year
         .groupby('Field_Location')
         .agg(
-            **{f'mean_yield_lag_{lag}': ('Yield_Mg_ha', 'mean')},
-            **{f'min_yield_lag_{lag}': ('Yield_Mg_ha', 'min')},
-            **{f'p1_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.01))},
-            **{f'q1_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.25))},
-            **{f'q3_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.75))},
-            **{f'p90_yield_lag_{lag}': ('Yield_Mg_ha', lambda x: x.quantile(0.90))},
+            **{f'mean_{col}': ('Yield_Mg_ha', 'mean')},
+            **{f'min_{col}': ('Yield_Mg_ha', 'min')},
+            **{f'p1_{col}': ('Yield_Mg_ha', lambda x: x.quantile(0.01))},
+            **{f'q1_{col}': ('Yield_Mg_ha', lambda x: x.quantile(0.25))},
+            **{f'q3_{col}': ('Yield_Mg_ha', lambda x: x.quantile(0.75))},
+            **{f'p90_{col}': ('Yield_Mg_ha', lambda x: x.quantile(0.90))},
         )
     )
     return df_agg
@@ -122,26 +123,47 @@ def extract_target(df: pd.DataFrame):
 def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False):
     '''
     Targets with NA are due to discarded plots (accordingly with Cyverse data)
-    TODO: discard or impute?
-    Reference: "Genome-enabled Prediction Accuracies Increased by Modeling Genotype x Environment Interaction in Durum Wheat (Sukumaran, 2017)
+    Reference: "Genome-enabled Prediction Accuracies Increased by Modeling Genotype x Environment Interaction in Durum Wheat" (Sukumaran et. al, 2017)
+    https://acsess.onlinelibrary.wiley.com/doi/10.3835/plantgenome2017.12.0112
     '''
 
     if fillna:
         raise NotImplementedError('"fillna" is not implemented.')
     
     assert cv in {0, 1, 2}, 'Select cv = 0, 1, or 2.'
-    
-    # train in known genotypes, predict in unknown year
+
+    vcfed_hybrids = pd.read_csv('data/Training_Data/All_hybrid_names_info.csv')
+    vcfed_hybrids = vcfed_hybrids[vcfed_hybrids['vcf'] == True]['Hybrid']
+
+    # train in known hybrids, predict in unknown year
     if cv == 0:
         train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
+        print('# rows train before pruning:', len(train))
+        print('# rows val before pruning:', len(val))
+        known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
+        train = train[train['Hybrid'].isin(known_hybrids)]
+        val = val[val['Hybrid'].isin(known_hybrids)]
+        print('# rows train after pruning:', len(train))
+        print('# rows val after pruning:', len(val))
 
-    # train in known year, predict in unknown genotypes
+    # train in known year, predict in unknown hybrids
     elif cv == 1:
-        pass
+        train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])  # train on 2020 and 2021
+        val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
+        known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
+        train = train[train['Hybrid'].isin(known_hybrids)]
+        val = val[val['Hybrid'].isin(known_hybrids)]
+        print('# unique hybrids in train before pruning:', len(set(train['Hybrid'])))
+        sampled_hybrids = val['Hybrid'].drop_duplicates().sample(frac=0.2, random_state=42)
+        train = train[~train['Hybrid'].isin(sampled_hybrids)]
+        print('# unique hybrids in train after pruning:', len(set(train['Hybrid'])))
 
-    # 
+    # hybrids that have been evaluated in the same year but not in other
     elif cv == 2:
         pass
+
+    else:
+        raise NotImplementedError(f'cv = {cv} was not implemented.')
     
     return train, val

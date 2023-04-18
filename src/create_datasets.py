@@ -26,6 +26,13 @@ if args.cv == 0:
     YTRAIN_YEAR = 2020
     YVAL_YEAR = 2021
     YTEST_YEAR = 2022
+elif args.cv == 1:
+    print('Using CV1')
+    YTRAIN_YEAR = 2021  # for split it uses 2021 and 2022
+    YVAL_YEAR = 2021
+    YTEST_YEAR = 2022
+elif args.cv == 2:
+    pass
 
 OUTPUT_PATH = Path(f'output/cv{args.cv}')
 TRAIT_PATH = 'data/Training_Data/1_Training_Trait_Data_2014_2021.csv'
@@ -129,19 +136,6 @@ if __name__ == '__main__':
     print('lat/lon unique bins:')
     print('lat:', sorted(set(xtrain['weather_station_lat'].unique())))
     print('lon:', sorted(set(xtrain['weather_station_lon'].unique())))
-
-    vcfed_hybrids = pd.read_csv('data/Training_Data/All_hybrid_names_info.csv')
-    vcfed_hybrids = vcfed_hybrids[vcfed_hybrids['vcf'] == True]['Hybrid']
-
-    # known hybrids
-    if args.cv == 0:
-        print('# rows xtrain before pruning:', len(xtrain))
-        print('# rows xval before pruning:', len(xval))
-        known_hybrids = set(vcfed_hybrids) & set(xtrain['Hybrid']) & set(xval['Hybrid'])
-        xtrain = xtrain[xtrain['Hybrid'].isin(known_hybrids)]
-        xval = xval[xval['Hybrid'].isin(known_hybrids)]
-        print('# rows xtrain after pruning:', len(xtrain))
-        print('# rows xval after pruning:', len(xval))
 
     # set index
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
