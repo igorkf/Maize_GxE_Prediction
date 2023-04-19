@@ -35,9 +35,11 @@ rownames(kinship) <- colnames(kinship)[1:dim(kinship)[1]]
 kinship <- kinship[rownames(kinship) %in% y$Hybrid, ]
 
 K <- kronecker(x, kinship, make.dimnames = T)
+rm(x); rm(kinship); gc()
 cat("K dim:", dim(K), "\n")
 
 K <- K[rownames(K) %in% paste0(y$Env, ":", y$Hybrid), ]
+rm(y)
 cat("K dim:", dim(K), "\n")
 
 # write to feather for fast reading (~3.5 min)
@@ -46,6 +48,8 @@ arrow::write_feather(
   outfile,
   chunk_size = 1000
 )
+rm(K); gc()
 cat("Writing file:", outfile, "\n\n")
+Sys.sleep(5)
 
 
