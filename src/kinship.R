@@ -50,7 +50,7 @@ cat("kinship A ok\n")
 # using the AGHmatrix package to create a dominant relationship matrix
 kin_d <- Gmatrix(dt, "Vitezica")
 
-# saving additive matrix to file
+# saving dominant matrix to file
 fwrite(kin_d, "output/kinship_dominant.txt", sep = "\t", quote = F)
 cat("kinship D ok\n")
 
