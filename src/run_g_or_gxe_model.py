@@ -33,9 +33,18 @@ else:
     print('Using GxE model.')
     outfile = OUTPUT_PATH / 'oof_gxe_model'
 
-# TODO: deal with other cases (CV1 and CV2)
-TRAIN_YEAR = 2020
-VAL_YEAR = 2021
+if args.cv == 0:
+    print('Using CV0')
+    YTRAIN_YEAR = 2020
+    YVAL_YEAR = 2021
+    YTEST_YEAR = 2022
+elif args.cv == 1:
+    print('Using CV1')
+    YTRAIN_YEAR = 2021  # for split it uses 2020 and 2021
+    YVAL_YEAR = 2021
+    YTEST_YEAR = 2022
+elif args.cv == 2:
+    pass
 
 
 def preprocess_g(df, kinship):
@@ -55,10 +64,10 @@ def preprocess_gxe(df, year, kinship):
 
 
 def prepare_train_val_gxe(kinship):
-    xtrain = pd.read_feather(f'output/kronecker_{kinship}_train.feather')
-    xtrain = preprocess_gxe(xtrain, year=TRAIN_YEAR, kinship=kinship)
-    xval = pd.read_feather(f'output/kronecker_{kinship}_val.feather')
-    xval = preprocess_gxe(xval, year=VAL_YEAR, kinship=kinship)
+    xtrain = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}_train.feather')
+    xtrain = preprocess_gxe(xtrain, year=YTRAIN_YEAR, kinship=kinship)
+    xval = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}_val.feather')
+    xval = preprocess_gxe(xval, year=YVAL_YEAR, kinship=kinship)
     return xtrain, xval
 
 
