@@ -67,7 +67,7 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 
 
 ### Preprocessing vcf
-Create kinships matrices (you will need `vcftools` and `plink` here):
+Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
 ```
 ./run_vcf_filtering.sh
 ```
@@ -81,4 +81,9 @@ Run CV0:
 ./run_cv.sh 0
 ```
 
-Some files are big so you might want to exclude them.
+Run CV1:   
+```
+./run_cv.sh 1
+```
+
+Some files are big so you might want to exclude them later.

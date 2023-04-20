@@ -28,7 +28,7 @@ if args.cv == 0:
     YTEST_YEAR = 2022
 elif args.cv == 1:
     print('Using CV1')
-    YTRAIN_YEAR = 2021  # for split it uses 2021 and 2022
+    YTRAIN_YEAR = 2021  # for split it uses 2020 and 2021
     YVAL_YEAR = 2021
     YTEST_YEAR = 2022
 elif args.cv == 2:
