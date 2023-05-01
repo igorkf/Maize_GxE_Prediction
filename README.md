@@ -76,14 +76,14 @@ Filter VCF and create kinships matrices (you will need `vcftools` and `plink` he
 ```
 
 ### Run models
-Run CV0:   
+Run all CVs for E and G models:   
 ```
-./run_cv.sh 0
-```
-
-Run CV1:   
-```
-./run_cv.sh 1
+./run_cv_e_g_models.sh
 ```
 
-Some files are big so you might want to exclude them later.
+Run all CVs for GxE models:   
+```
+./run_cv_gxe_models.sh
+```
+
+Some files in `output` will be big so you might want to exclude them later.
