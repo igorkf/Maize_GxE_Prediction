@@ -32,7 +32,10 @@ elif args.cv == 1:
     YVAL_YEAR = 2021
     YTEST_YEAR = 2022
 elif args.cv == 2:
-    pass
+    print('Using CV2')
+    YTRAIN_YEAR = 2021  # for split it uses 2020 and 2021
+    YVAL_YEAR = 2021
+    YTEST_YEAR = 2022
 
 OUTPUT_PATH = Path(f'output/cv{args.cv}')
 TRAIT_PATH = 'data/Training_Data/1_Training_Trait_Data_2014_2021.csv'

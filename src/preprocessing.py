@@ -142,8 +142,8 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
         print('# rows train before pruning:', len(train))
         print('# rows val before pruning:', len(val))
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
-        train = train[train['Hybrid'].isin(known_hybrids)]
-        val = val[val['Hybrid'].isin(known_hybrids)]
+        train = train[train['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
+        val = val[val['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
         print('# rows train after pruning:', len(train))
         print('# rows val after pruning:', len(val))
 
@@ -152,18 +152,29 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
         train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])  # train on 2020 and 2021
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
-        train = train[train['Hybrid'].isin(known_hybrids)]
-        val = val[val['Hybrid'].isin(known_hybrids)]
+        train = train[train['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
+        val = val[val['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
         print('# unique hybrids in train before pruning:', len(set(train['Hybrid'])))
         sampled_hybrids = val['Hybrid'].drop_duplicates().sample(frac=0.2, random_state=42)
-        train = train[~train['Hybrid'].isin(sampled_hybrids)]
+        train = train[~train['Hybrid'].isin(sampled_hybrids)].reset_index(drop=True)
         print('# unique hybrids in train after pruning:', len(set(train['Hybrid'])))
 
-    # hybrids that have been evaluated in the same year but not in other
+    # some environment/hybrid combinations are unknown
     elif cv == 2:
-        pass
+        train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])  # train on 2020 and 2021
+        val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
+        known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
+        train = train[train['Hybrid'].isin(known_hybrids)]
+        val = val[val['Hybrid'].isin(known_hybrids)]
+        train['Env_Hybrid'] = train['Env'] + ':' + train['Hybrid']
+        val['Env_Hybrid'] = val['Env'] + ':' + val['Hybrid']
+        print('# unique env/hybrid in train before pruning:', len(set(train['Env_Hybrid'])))
+        sampled_env_hybrids = val.drop_duplicates(subset=['Env_Hybrid']).groupby('Env').sample(frac=0.2, random_state=42)['Env_Hybrid']
+        train = train[~train['Env_Hybrid'].isin(sampled_env_hybrids)].reset_index(drop=True)
+        print('# unique env/hybrid in train before pruning:', len(set(train['Env_Hybrid'])))
+        del train['Env_Hybrid'], val['Env_Hybrid']
 
     else:
-        raise NotImplementedError(f'cv = {cv} was not implemented.')
+        raise NotImplementedError(f'cv = {cv} is not implemented.')
     
     return train, val
