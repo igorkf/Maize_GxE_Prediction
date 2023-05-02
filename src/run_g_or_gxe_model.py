@@ -44,7 +44,10 @@ elif args.cv == 1:
     YVAL_YEAR = 2021
     YTEST_YEAR = 2022
 elif args.cv == 2:
-    pass
+    print('Using CV2')
+    YTRAIN_YEAR = 2021  # for split it uses 2020 and 2021
+    YVAL_YEAR = 2021
+    YTEST_YEAR = 2022
 
 
 def preprocess_g(df, kinship):
@@ -132,10 +135,10 @@ if __name__ == '__main__':
             kinships.append(epiDD)
         else:
             xtrain, xval = prepare_train_val_gxe('epi_DD')
-            del xtrain
             kroneckers_train.append(xtrain)
-            del xval
+            del xtrain
             kroneckers_val.append(xval)
+            del xval
 
     if args.epiAD:
         print('Using epiAD matrix.')
