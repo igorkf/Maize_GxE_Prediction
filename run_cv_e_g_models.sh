@@ -1,4 +1,4 @@
-for cv in 0 1
+for cv in 0 1 2
 do 
     echo "----------------------------------"
     echo "CV=${cv}"
