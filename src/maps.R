@@ -12,7 +12,7 @@ xtrain <- read.csv('output/cv0/xtrain.csv')
 ytrain <- read.csv('output/cv0/ytrain.csv')
 df <- left_join(xtrain, ytrain, by = c('Env', 'Hybrid'))
 df <- filter(df, stringr::str_detect(Env, 'GEH1') == F)
-df$Loc <- str_sub(df$Env, end = 3)
+df$Loc <- stringr::str_sub(df$Env, end = 3)
 
 # create x, y to plot points
 df_trans <- usmap_transform(
@@ -35,7 +35,7 @@ df_mean_yield <- df_trans |>
 plot_usmap(regions = 'state', labels = T) +
   geom_point(data = df_mean_yield, aes(x = x, y = y, fill = yield), color = 'black', pch = 21, size = 3) +
   scale_fill_gradient(low = 'red', high = 'green') +
-  labs(fill = 'Mean yield') +
+  labs(fill = 'Mean yield\n (Mg/ha)') +
   theme(
     legend.position = 'top',
     legend.justification = 'right',
