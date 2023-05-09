@@ -1,7 +1,7 @@
 library(data.table)
 
 args <- commandArgs(trailingOnly = TRUE)
-cv <- args[1]  # 1, 2, or 3
+cv <- args[1]  # 0, 1, or 2
 debug <- as.logical(args[2])  # FALSE or TRUE  (for debugging set to TRUE)
 dataset <- args[3]  # "train" or "val"
 kinship_type <- args[4]  # "additive", "dominant", "epi_AA", "epi_DD", or "epi_AD"

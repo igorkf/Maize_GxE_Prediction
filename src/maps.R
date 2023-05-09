@@ -8,8 +8,8 @@ library(ggplot2)
 library(dplyr)
 
 # read data and filter non US
-xtrain <- read.csv('repos/Maize_GxE_Prediction/output/cv0/xtrain.csv')
-ytrain <- read.csv('repos/Maize_GxE_Prediction/output/cv0/ytrain.csv')
+xtrain <- read.csv('output/cv0/xtrain.csv')
+ytrain <- read.csv('output/cv0/ytrain.csv')
 df <- left_join(xtrain, ytrain, by = c('Env', 'Hybrid'))
 df <- filter(df, stringr::str_detect(Env, 'GEH1') == F)
 df$Loc <- str_sub(df$Env, end = 3)
