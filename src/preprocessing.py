@@ -3,6 +3,11 @@ from math import floor
 import pandas as pd
 
 
+def create_field_location(df: pd.DataFrame):
+    df['Field_Location'] = df['Env'].str.replace('(_).*', '', regex=True)
+    return df
+
+
 def process_metadata(path: str, encoding: str = 'latin-1'):
     df = pd.read_csv(path, encoding=encoding)
     df['City'] = df['City'].str.strip().replace({'College Station, Texas': 'College Station'})
@@ -16,7 +21,7 @@ def process_metadata(path: str, encoding: str = 'latin-1'):
 
 def process_test_data(path: str):
     df = pd.read_csv(path)
-    df['Field_Location'] = df['Env'].str.replace('(_).*', '', regex=True)
+    df = create_field_location(df)
     return df
 
 
@@ -138,34 +143,41 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
     # train in known hybrids, predict in unknown year
     if cv == 0:
         train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
+        train = create_field_location(train)
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
+        val = create_field_location(val)
         print('# rows train before pruning:', len(train))
         print('# rows val before pruning:', len(val))
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
-        train = train[train['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
-        val = val[val['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
+        known_locations = set(train['Field_Location']) & set(val['Field_Location'])
+        train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
         print('# rows train after pruning:', len(train))
         print('# rows val after pruning:', len(val))
+        del train['Field_Location'], val['Field_Location']
 
     # train in known year, predict in unknown hybrids
     elif cv == 1:
         train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])  # train on 2020 and 2021
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
-        train = train[train['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
-        val = val[val['Hybrid'].isin(known_hybrids)].reset_index(drop=True)
+        known_locations = set(train['Field_Location']) & set(val['Field_Location'])
+        train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
         print('# unique hybrids in train before pruning:', len(set(train['Hybrid'])))
         sampled_hybrids = val['Hybrid'].drop_duplicates().sample(frac=0.2, random_state=42)
         train = train[~train['Hybrid'].isin(sampled_hybrids)].reset_index(drop=True)
         print('# unique hybrids in train after pruning:', len(set(train['Hybrid'])))
+        del train['Field_Location'], val['Field_Location']
 
     # some environment/hybrid combinations are unknown
     elif cv == 2:
         train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])  # train on 2020 and 2021
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
-        train = train[train['Hybrid'].isin(known_hybrids)]
-        val = val[val['Hybrid'].isin(known_hybrids)]
+        known_locations = set(train['Field_Location']) & set(val['Field_Location'])
+        train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
         train['Env_Hybrid'] = train['Env'] + ':' + train['Hybrid']
         val['Env_Hybrid'] = val['Env'] + ':' + val['Hybrid']
         print('# unique env/hybrid in train before pruning:', len(set(train['Env_Hybrid'])))
@@ -173,6 +185,7 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
         train = train[~train['Env_Hybrid'].isin(sampled_env_hybrids)].reset_index(drop=True)
         print('# unique env/hybrid in train before pruning:', len(set(train['Env_Hybrid'])))
         del train['Env_Hybrid'], val['Env_Hybrid']
+        del train['Field_Location'], val['Field_Location']
 
     else:
         raise NotImplementedError(f'cv = {cv} is not implemented.')
