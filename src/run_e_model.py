@@ -1,11 +1,15 @@
 import argparse
+import os
+import contextlib
 from pathlib import Path
 
 import pandas as pd
 import lightgbm as lgbm
+import optuna
 
 from preprocessing import process_test_data
 from evaluate import create_df_eval, avg_rmse, feat_imp
+from tune import objective
 
 
 parser = argparse.ArgumentParser()
@@ -33,12 +37,22 @@ if __name__ == '__main__':
     xval = xval.set_index(['Env', 'Hybrid'])
     xtest = xtest.set_index(['Env', 'Hybrid'])
 
-    # train model
-    model = lgbm.LGBMRegressor(
-        random_state=42,
-        max_depth=2
-    )
-    model.fit(xtrain, ytrain)
+    print('Tunning.')
+
+    # silent lgbm warnings
+    with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
+        optuna.logging.set_verbosity(optuna.logging.WARNING)  # silent optuna results
+        study = optuna.create_study(direction='minimize', sampler=optuna.samplers.TPESampler(seed=42))
+        func = lambda trial: objective(trial, xtrain, ytrain, xval, yval)
+        study.optimize(func, n_trials=200)
+
+        # fit again with best parameters
+        model = lgbm.LGBMRegressor(**study.best_trial.params, random_state=42)
+        model.fit(xtrain, ytrain)
+        
+    print('# Trials:', len(study.trials))
+    print('Best trial:', study.best_trial.params)
+    print('Best RMSE:', study.best_value)
 
     # feature importance
     df_feat_imp = feat_imp(model)
