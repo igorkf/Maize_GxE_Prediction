@@ -5,7 +5,7 @@ import pandas as pd
 import lightgbm as lgbm
 
 from preprocessing import process_test_data
-from evaluate import create_df_eval, avg_rmse
+from evaluate import create_df_eval, avg_rmse, feat_imp
 
 
 parser = argparse.ArgumentParser()
@@ -41,9 +41,8 @@ if __name__ == '__main__':
     model.fit(xtrain, ytrain)
 
     # feature importance
-    # feat_imp = dict(zip(model.feature_name_, model.feature_importances_))
-    # feat_imp = dict(sorted(feat_imp.items(), key=lambda x: -x[1]))
-    # print(feat_imp)
+    df_feat_imp = feat_imp(model)
+    df_feat_imp.to_csv(OUTPUT_PATH / 'feat_imp_e_model.csv', index=False)
 
     # predict
     ypred = model.predict(xval)

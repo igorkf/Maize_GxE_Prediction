@@ -8,7 +8,7 @@ import lightgbm as lgbm
 from sklearn.decomposition import TruncatedSVD
 import optuna
 
-from evaluate import create_df_eval, avg_rmse
+from evaluate import create_df_eval, avg_rmse, feat_imp
 from tune import objective
 
 
@@ -242,6 +242,11 @@ if __name__ == '__main__':
         print('# Trials:', len(study.trials))
         print('Best trial:', study.best_trial.params)
         print('Best RMSE:', study.best_value)
+
+        # feature importance
+        df_feat_imp = feat_imp(model)
+        feat_imp_outfile = f'{outfile.replace("oof", "feat_imp")}.csv'
+        df_feat_imp.to_csv(feat_imp_outfile, index=False)
 
         # predict
         ypred = model.predict(xval)
