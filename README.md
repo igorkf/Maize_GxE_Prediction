@@ -66,7 +66,17 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 ```
 
 
-### Preprocessing vcf
+### Preprocessing
+Create all datasets:
+```
+./run_cv_datasets.sh
+```
+
+Create a list of individuals to be used:
+```
+python3 src/create_individuals.py
+```
+
 Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
 ```
 ./run_vcf_filtering.sh
@@ -76,10 +86,6 @@ Filter VCF and create kinships matrices (you will need `vcftools` and `plink` he
 ```
 
 ### Run models
-Create all datasets:
-```
-./run_cv_datasets.sh
-```
 
 Run all CVs for E and G models:   
 ```
