@@ -50,9 +50,10 @@ elif args.cv == 2:
     YTEST_YEAR = 2022
 
 
-def preprocess_g(df, kinship):
+def preprocess_g(df, kinship, individuals: list):
     df.columns = [x[:len(x) // 2] for x in df.columns]  # fix duplicated column names
     df.index = df.columns
+    df = df.loc[individuals, individuals].copy()  # keep only know individuals
     df.index.name = 'Hybrid'
     df.columns = [f'{x}_{kinship}' for x in df.columns]
     return df
@@ -79,6 +80,9 @@ if __name__ == '__main__':
     # load targets
     ytrain = pd.read_csv(OUTPUT_PATH / 'ytrain.csv')
     yval = pd.read_csv(OUTPUT_PATH / 'yval.csv')
+    individuals = ytrain['Hybrid'].unique().tolist() + yval['Hybrid'].unique().tolist()
+    individuals = list(dict.fromkeys(individuals))  # take unique but preserves order (python 3.7+)
+    print('# unique individuals:', len(individuals))
 
     # load kinships or kroneckers
     kinships = []
@@ -89,7 +93,7 @@ if __name__ == '__main__':
         outfile = f'{outfile}_A'
         if args.model == 'G':
             A = pd.read_csv('output/kinship_additive.txt', sep='\t')
-            A = preprocess_g(A, 'A')
+            A = preprocess_g(A, 'A', individuals)
             kinships.append(A)
         else:
             xtrain, xval = prepare_train_val_gxe('additive')
@@ -103,7 +107,7 @@ if __name__ == '__main__':
         outfile = f'{outfile}_D'
         if args.model == 'G':
             D = pd.read_csv('output/kinship_dominant.txt', sep='\t')
-            D = preprocess_g(D, 'D')
+            D = preprocess_g(D, 'D', individuals)
             kinships.append(D)
         else:
             xtrain, xval = prepare_train_val_gxe('dominant')
@@ -117,7 +121,7 @@ if __name__ == '__main__':
         outfile = f'{outfile}_epiAA'
         if args.model == 'G':
             epiAA = pd.read_csv('output/kinship_epi_AA.txt', sep='\t')
-            epiAA = preprocess_g(epiAA, 'epi_AA')
+            epiAA = preprocess_g(epiAA, 'epi_AA', individuals)
             kinships.append(epiAA)
         else:
             xtrain, xval = prepare_train_val_gxe('epi_AA')
@@ -131,7 +135,7 @@ if __name__ == '__main__':
         outfile = f'{outfile}_epiDD'
         if args.model == 'G':
             epiDD = pd.read_csv('output/kinship_epi_DD.txt', sep='\t')
-            epiDD = preprocess_g(epiDD, 'epi_DD')
+            epiDD = preprocess_g(epiDD, 'epi_DD', individuals)
             kinships.append(epiDD)
         else:
             xtrain, xval = prepare_train_val_gxe('epi_DD')
@@ -145,7 +149,7 @@ if __name__ == '__main__':
         outfile = f'{outfile}_epiAD'
         if args.model == 'G':
             epiAD = pd.read_csv('output/kinship_epi_AD.txt', sep='\t')
-            epiAD = preprocess_g(epiAD, 'epi_AD')
+            epiAD = preprocess_g(epiAD, 'epi_AD', individuals)
             kinships.append(epiAD)
         else:
             xtrain, xval = prepare_train_val_gxe('epi_AD')

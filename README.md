@@ -91,4 +91,9 @@ Run all CVs for GxE models:
 ./run_cv_gxe_models.sh
 ```
 
-Some files in `output` will be big so you might want to exclude them later.
+Run all CVs for GBLUP models:
+```
+./run_cv_gblup_models.sh
+```
+
+Some files in `output` will be big (+40GB), particularly the Kronecker files, so you might want to exclude them later.
