@@ -18,15 +18,15 @@ cat('invert:', invert, '\n')
 
 if (debug == TRUE) {
   asreml.options(
-    workspace = '24gb',
-    # pworkspace = '24gb',
+    workspace = '4gb',
+    pworkspace = '4gb',
     maxit = 300,
     na.action = na.method(y = 'include', x = 'omit')
   )
 } else {
   asreml.options(
-    workspace = '24gb',
-    # pworkspace = '1gb',
+    workspace = '4gb',
+    pworkspace = '4gb',
     maxit = 300,
     na.action = na.method(y = 'include', x = 'omit')
   )
@@ -36,10 +36,6 @@ if (debug == TRUE) {
 ytrain <- fread(paste0('output/cv', cv, '/ytrain.csv'), data.table = F)
 ytrain <- transform(ytrain, Env = factor(Env), Hybrid = factor(Hybrid))
 ytrain$Field_Location <- factor(sub('_[^_]+$', '', ytrain$Env))
-if (debug == TRUE) {
-  ytrain <- subset(ytrain, Hybrid %in% rownames(kmatrix))
-  rownames(ytrain) <- NULL
-}
 cat('ytrain shape:', dim(ytrain), '\n')
 yval <- fread(paste0('output/cv', cv, '/yval.csv'), data.table = F)
 yval <- transform(yval, Env = factor(Env), Hybrid = factor(Hybrid))
@@ -57,8 +53,9 @@ ind_idxs <- which(rownames(kmatrix) %in% c(ytrain$Hybrid, yval$Hybrid) == TRUE)
 kmatrix <- kmatrix[ind_idxs, ind_idxs]
 if (debug == TRUE) {
   set.seed(2023)
-  sampled_idx <- sample(1:nrow(kmatrix), 100)
+  sampled_idx <- sample(1:nrow(kmatrix), 300)
   kmatrix <- kmatrix[sampled_idx, sampled_idx]
+  ytrain <- subset(ytrain, Hybrid %in% rownames(kmatrix))
 }
 cat('Number of individuals being used:', nrow(kmatrix), '\n')
 
@@ -81,10 +78,12 @@ if (invert == TRUE) {
 }
 
 # modeling
+set.seed(2023)
 if (invert == TRUE) {
   mod <- asreml(
     Yield_Mg_ha ~ Field_Location,
     random = ~ fa(Field_Location):vm(Hybrid, source = ginv),
+    predict = predict.asreml(classify = 'Field_Location:Hybrid'),
     data = ytrain
   )
 } else {
@@ -92,7 +91,8 @@ if (invert == TRUE) {
     Yield_Mg_ha ~ Field_Location,
     random = ~ fa(Field_Location):vm(Hybrid, source = kmatrix, singG = 'NSD'),
     # random = ~ vm(Hybrid, source = kmatrix, singG = 'NSD') + Field_Location:Hybrid,
-    data = ytrain
+    predict = predict.asreml(classify = 'Field_Location:Hybrid'),
+    data = ytrain,
   )
 }
 gc()
@@ -106,20 +106,18 @@ evaluate <- function(df) {
 }
 
 # predict and evaluate
-cat('\nPrediction for Hybrid\n')
-pred_hybrid <- predict.asreml(mod, classify = 'Hybrid')$pvals[, 1:2]
-pred_hybrid <- merge(yval, pred_hybrid, by = 'Hybrid')
-evaluate(pred_hybrid)
-gc()
+# cat('\nPrediction for Hybrid\n')
+# pred_hybrid <- predict.asreml(mod, classify = 'Hybrid')$pvals[, 1:2]
+# pred_hybrid <- merge(yval, pred_hybrid, by = 'Hybrid')
+# evaluate(pred_hybrid)
 
-cat('\nPrediction for Env:Hybrid\n')
-pred_env_hybrid <- predict.asreml(mod, classify = 'Field_Location:Hybrid')$pvals[, 1:3]
-pred_env_hybrid <- merge(yval, pred_env_hybrid, by = c('Field_Location', 'Hybrid'))
+# cat('\nPrediction for Env:Hybrid\n')
+# pred_env_hybrid <- predict.asreml(mod, classify = 'Field_Location:Hybrid')$pvals[, 1:3]
+pred_env_hybrid <- merge(yval, mod$predictions$pvals[, 1:3], by = c('Field_Location', 'Hybrid'))
 evaluate(pred_env_hybrid)
-gc()
 
 # write predictions
 cols <- c('Env', 'Hybrid', 'predicted.value')
-fwrite(pred_hybrid[, cols], paste0('output/cv', cv, '/oof_gblup_hybrid_model.csv'))
+# fwrite(pred_hybrid[, cols], paste0('output/cv', cv, '/oof_gblup_hybrid_model.csv'))
 fwrite(pred_env_hybrid[, cols], paste0('output/cv', cv, '/oof_gblup_env_hybrid_model.csv'))
 
