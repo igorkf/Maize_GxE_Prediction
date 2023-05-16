@@ -22,6 +22,7 @@ parser.add_argument('--epiDD', action='store_true', default=False)
 parser.add_argument('--epiAD', action='store_true', default=False)
 parser.add_argument('--svd', action='store_true', default=False)
 parser.add_argument('--n_components', type=int, default=100)
+parser.add_argument('--lag_features', action='store_true', default=False)
 args = parser.parse_args()
 
 OUTPUT_PATH = Path(f'output/cv{args.cv}')
@@ -182,10 +183,12 @@ if __name__ == '__main__':
 
     # bind lagged yield features
     no_lags_cols = [x for x in xtrain.columns.tolist() if x not in ['Env', 'Hybrid']]
-    xtrain_lag = pd.read_csv(OUTPUT_PATH / 'xtrain.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-    xval_lag = pd.read_csv(OUTPUT_PATH / 'xval.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-    xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
-    xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
+    if args.lag_features:
+        outfile = f'{outfile}_lag_features'
+        xtrain_lag = pd.read_csv(OUTPUT_PATH / 'xtrain.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+        xval_lag = pd.read_csv(OUTPUT_PATH / 'xval.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+        xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
+        xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
     
     if args.model == 'GxE':
         xtrain = xtrain.set_index(['Env', 'Hybrid'])
@@ -193,8 +196,6 @@ if __name__ == '__main__':
     
     # run model
     if not args.svd:
-        del xtrain_lag, xval_lag
-
         outfile = f'{outfile}_full'
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
@@ -224,9 +225,13 @@ if __name__ == '__main__':
         xval_svd = pd.DataFrame(svd.transform(xval[no_lags_cols]), columns=svd_cols, index=xval[no_lags_cols].index)
 
         # bind lagged yield features
-        xtrain = xtrain_svd.merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
-        xval = xval_svd.merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
-        del xtrain_lag, xval_lag
+        if args.lag_features:
+            xtrain = xtrain_svd.merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner').copy()
+            xval = xval_svd.merge(xval_lag, on=['Env', 'Hybrid'], how='inner').copy()
+            del xtrain_lag, xval_lag
+        else:
+            xtrain = xtrain_svd.copy()
+            xval = xval_svd.copy()
 
     # tune model if using svd features
     if args.svd:

@@ -103,3 +103,7 @@ Run all CVs for GBLUP models:
 ```
 
 Some files in `output` will be big (+40GB), particularly the Kronecker files, so you might want to exclude them later.
+
+Notes: 
+
+- All G and GxE LGBM models can run with lagged yield features if you add the '--lag_features' option.
