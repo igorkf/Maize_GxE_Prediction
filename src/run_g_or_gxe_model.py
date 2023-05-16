@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
     # tune model if using svd features
     if args.svd:
-        print('Tunning.')
+        print('Tuning.')
 
         # silent lgbm warnings
         with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):

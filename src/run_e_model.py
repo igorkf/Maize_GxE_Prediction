@@ -37,7 +37,7 @@ if __name__ == '__main__':
     xval = xval.set_index(['Env', 'Hybrid'])
     xtest = xtest.set_index(['Env', 'Hybrid'])
 
-    print('Tunning.')
+    print('Tuning.')
 
     # silent lgbm warnings
     with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
