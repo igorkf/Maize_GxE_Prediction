@@ -104,6 +104,16 @@ Run all CVs for GBLUP models:
 
 Some files in `output` will be big (+6GB), particularly the Kronecker files, so you might want to exclude them later.
 
+### If running in a cluster
+We used SLURM to schedule the jobs. To run all the jobs do:
+```
+JOBID1=$(sbatch --parsable run_job1.sh)
+sbatch --dependency=afterok:$JOBID1 run_job2.sh
+sbatch --dependency=afterok:$JOBID1 run_job3.sh
+```
+
+--------------
+
 Notes: 
 
 - All G and GxE LGBM models can run with lagged yield features if you add the '--lag_features' option.
