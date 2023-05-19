@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH --job-name=maize_gxe_prediction_part1
+#SBATCH --job-name=maize1
 #SBATCH --output=logs/job_part1.txt
 #SBATCH --partition comp06
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --tasks-per-node=32
 #SBATCH --time=6:00:00
 
