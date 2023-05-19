@@ -171,9 +171,10 @@ if __name__ == '__main__':
     else:
         xtrain = pd.concat(kroneckers_train, axis=1)
         xtrain = xtrain.merge(ytrain, on=['Env', 'Hybrid'], how='inner')
+        del kroneckers_train
         xval = pd.concat(kroneckers_val, axis=1)
         xval = xval.merge(yval, on=['Env', 'Hybrid'], how='inner')
-        del kroneckers_train, kroneckers_val
+        del kroneckers_val
 
     # split x, y
     ytrain = xtrain['Yield_Mg_ha']
@@ -227,11 +228,14 @@ if __name__ == '__main__':
         # bind lagged yield features
         if args.lag_features:
             xtrain = xtrain_svd.merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner').copy()
+            del xtrain_svd, xtrain_lag
             xval = xval_svd.merge(xval_lag, on=['Env', 'Hybrid'], how='inner').copy()
-            del xtrain_lag, xval_lag
+            del xval_svd, xval_lag
         else:
             xtrain = xtrain_svd.copy()
+            del xtrain_svd
             xval = xval_svd.copy()
+            del xval_svd
 
     # tune model if using svd features
     if args.svd:
