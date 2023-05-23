@@ -16,7 +16,7 @@ if (length(args) == 0) {
 cat('debug:', debug, '\n')
 cat('invert:', invert, '\n')
 
-if (debug == TRUE) {
+if (cv == 0) {
   asreml.options(
     workspace = '4gb',
     pworkspace = '4gb',
@@ -25,8 +25,8 @@ if (debug == TRUE) {
   )
 } else {
   asreml.options(
-    workspace = '4gb',
-    pworkspace = '4gb',
+    workspace = '8gb',
+    pworkspace = '8gb',
     maxit = 300,
     na.action = na.method(y = 'include', x = 'omit')
   )
@@ -95,6 +95,10 @@ if (invert == TRUE) {
     data = ytrain,
   )
 }
+if (cv == 0) {
+  mod <- update.asreml(mod)
+  mod <- update.asreml(mod)
+}
 gc()
 
 evaluate <- function(df) {
@@ -117,7 +121,9 @@ pred_env_hybrid <- merge(yval, mod$predictions$pvals[, 1:3], by = c('Field_Locat
 evaluate(pred_env_hybrid)
 
 # write predictions
-cols <- c('Env', 'Hybrid', 'predicted.value')
-# fwrite(pred_hybrid[, cols], paste0('output/cv', cv, '/oof_gblup_hybrid_model.csv'))
-fwrite(pred_env_hybrid[, cols], paste0('output/cv', cv, '/oof_gblup_env_hybrid_model.csv'))
+cols <- c('Env', 'Hybrid', 'Yield_Mg_ha', 'predicted.value')
+pred_env_hybrid <- pred_env_hybrid[, cols]
+colnames(pred_env_hybrid) <- c('Env', 'Hybrid', 'ytrue', 'ypred')
+# fwrite(pred_hybrid, paste0('output/cv', cv, '/oof_gblup_hybrid_model.csv'))
+fwrite(pred_env_hybrid, paste0('output/cv', cv, '/oof_gblup_env_hybrid_model.csv'))
 
