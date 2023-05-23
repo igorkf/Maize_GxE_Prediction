@@ -15,7 +15,7 @@ dependencies:
   - brotli-bin=1.0.9=h166bdaf_8
   - bzip2=1.0.8=h7f98852_4
   - ca-certificates=2023.01.10=h06a4308_0
-  - certifi=2023.5.7=pyhd8ed1ab_0
+  - certifi=2022.12.7=py38h06a4308_0
   - charset-normalizer=3.1.0=pyhd8ed1ab_0
   - comm=0.1.2=py38h06a4308_0
   - cycler=0.11.0=pyhd8ed1ab_0
@@ -29,6 +29,7 @@ dependencies:
   - ipykernel=6.19.2=py38hb070fc8_0
   - ipython=8.8.0=py38h06a4308_0
   - jedi=0.18.1=py38h06a4308_1
+  - jinja2=3.1.2=py38h06a4308_0
   - jupyter_client=7.4.8=py38h06a4308_0
   - jupyter_core=5.1.1=py38h06a4308_0
   - kiwisolver=1.4.4=py38h43d8883_1
