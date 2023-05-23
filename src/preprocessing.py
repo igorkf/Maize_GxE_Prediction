@@ -143,9 +143,7 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
     # train in known hybrids, predict in unknown year
     if cv == 0:
         train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
-        train = create_field_location(train)
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
-        val = create_field_location(val)
         print('# rows train before pruning:', len(train))
         print('# rows val before pruning:', len(val))
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
