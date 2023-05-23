@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=maize2
 #SBATCH --output=logs/job_part2.txt
-#SBATCH --partition comp06
+#SBATCH --partition comp72
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=32
 #SBATCH --time=6:00:00
