@@ -5,7 +5,7 @@
 #SBATCH --partition comp72
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=32
-#SBATCH --time=6:00:00
+#SBATCH --time=24:00:00
 
 ## configs 
 module purge

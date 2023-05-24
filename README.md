@@ -92,6 +92,11 @@ Run all CVs for E and G models:
 ./run_cv_e_g_models.sh
 ```
 
+Run all CVs for Kroneckers:
+```
+./run_cv_kroneckers.sh
+```
+
 Run all CVs for GxE models:   
 ```
 ./run_cv_gxe_models.sh
@@ -108,10 +113,12 @@ Some files in `output` will be big (+6GB), particularly the Kronecker files, so 
 We used SLURM to schedule the jobs. To run all the jobs do:
 ```
 JOBID1=$(sbatch --parsable run_job1.sh)
-sbatch --dependency=afterok:$JOBID1 run_job2.sh
 sbatch --dependency=afterok:$JOBID1 run_job_gblupcv0.sh
 sbatch --dependency=afterok:$JOBID1 run_job_gblupcv1.sh
 sbatch --dependency=afterok:$JOBID1 run_job_gblupcv2.sh
+
+JOBID2=$(sbatch --dependency=afterok:$JOBID1 --parsable run_job_kroneckers.sh)
+sbatch --dependency=afterok:$JOBID2 run_job2.sh
 ```
 
 --------------
