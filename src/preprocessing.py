@@ -152,7 +152,6 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
         val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
         print('# rows train after pruning:', len(train))
         print('# rows val after pruning:', len(val))
-        del train['Field_Location'], val['Field_Location']
 
     # train in known year, predict in unknown hybrids
     elif cv == 1:
@@ -166,7 +165,6 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
         sampled_hybrids = val['Hybrid'].drop_duplicates().sample(frac=0.2, random_state=42)
         train = train[~train['Hybrid'].isin(sampled_hybrids)].reset_index(drop=True)
         print('# unique hybrids in train after pruning:', len(set(train['Hybrid'])))
-        del train['Field_Location'], val['Field_Location']
 
     # some environment/hybrid combinations are unknown
     elif cv == 2:
@@ -183,7 +181,6 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
         train = train[~train['Env_Hybrid'].isin(sampled_env_hybrids)].reset_index(drop=True)
         print('# unique env/hybrid in train before pruning:', len(set(train['Env_Hybrid'])))
         del train['Env_Hybrid'], val['Env_Hybrid']
-        del train['Field_Location'], val['Field_Location']
 
     else:
         raise NotImplementedError(f'cv = {cv} is not implemented.')
