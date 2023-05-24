@@ -109,14 +109,12 @@ We used SLURM to schedule the jobs. To run all the jobs do:
 ```
 JOBID1=$(sbatch --parsable run_job1.sh)
 sbatch --dependency=afterok:$JOBID1 run_job2.sh
-sbatch --dependency=afterok:$JOBID1 run_job3.sh
+sbatch --dependency=afterok:$JOBID1 run_job_gblupcv0.sh
+sbatch --dependency=afterok:$JOBID1 run_job_gblupcv1.sh
+sbatch --dependency=afterok:$JOBID1 run_job_gblupcv2.sh
 ```
 
 --------------
-
-Notes: 
-
-- All G and GxE LGBM models can run with lagged yield features if you add the '--lag_features' option.
 
 
 ******
@@ -127,3 +125,4 @@ You can compare the results side by side. For example, to compare models from CV
 ```
 pr -w $COLUMNS -m -t logs/e_model_cv0.txt logs/g_model_A_svd_cv0.txt logs/g_model_D_svd_cv0.txt logs/g_model_epiAA_epiDD_epiAD_svd_cv0.txt logs/g_model_A_D_epiAA_epiDD_epiAD_svd_cv0.txt
 ```
+
