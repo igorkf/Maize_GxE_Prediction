@@ -67,9 +67,11 @@ if __name__ == '__main__':
     df_feat_imp.to_csv(OUTPUT_PATH / 'feat_imp_e_model.csv', index=False)
 
     # predict
+    ypred_train = model.predict(xtrain)
     ypred = model.predict(xval)
 
     # evaluate
+    df_eval_train = create_df_eval(xtrain, ytrain, ypred_train)
     df_eval = create_df_eval(xval, yval, ypred)
     _ = avg_rmse(df_eval)
 
@@ -77,6 +79,7 @@ if __name__ == '__main__':
     outfile = OUTPUT_PATH / 'oof_e_model.csv'
     print('Writing:', outfile, '\n')
     df_eval.to_csv(outfile, index=False)
+    df_eval_train.to_csv(OUTPUT_PATH / 'pred_train_e_model.csv')
 
     # predict on test
     # df_sub['Yield_Mg_ha'] = model.predict(xtest)

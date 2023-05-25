@@ -95,10 +95,6 @@ if (invert == TRUE) {
     data = ytrain,
   )
 }
-if (cv == 0) {
-  mod <- update.asreml(mod)
-  mod <- update.asreml(mod)
-}
 gc()
 
 evaluate <- function(df) {
@@ -109,14 +105,7 @@ evaluate <- function(df) {
   cat('RMSE:', mean(rmses$RMSE), '\n')
 }
 
-# predict and evaluate
-# cat('\nPrediction for Hybrid\n')
-# pred_hybrid <- predict.asreml(mod, classify = 'Hybrid')$pvals[, 1:2]
-# pred_hybrid <- merge(yval, pred_hybrid, by = 'Hybrid')
-# evaluate(pred_hybrid)
-
-# cat('\nPrediction for Env:Hybrid\n')
-# pred_env_hybrid <- predict.asreml(mod, classify = 'Field_Location:Hybrid')$pvals[, 1:3]
+pred_train_env_hybrid <- merge(ytrain, mod$predictions$pvals[, 1:3], by = c('Field_Location', 'Hybrid'))
 pred_env_hybrid <- merge(yval, mod$predictions$pvals[, 1:3], by = c('Field_Location', 'Hybrid'))
 evaluate(pred_env_hybrid)
 
@@ -124,6 +113,10 @@ evaluate(pred_env_hybrid)
 cols <- c('Env', 'Hybrid', 'Yield_Mg_ha', 'predicted.value')
 pred_env_hybrid <- pred_env_hybrid[, cols]
 colnames(pred_env_hybrid) <- c('Env', 'Hybrid', 'ytrue', 'ypred')
-# fwrite(pred_hybrid, paste0('output/cv', cv, '/oof_gblup_hybrid_model.csv'))
 fwrite(pred_env_hybrid, paste0('output/cv', cv, '/oof_gblup_env_hybrid_model.csv'))
+
+# write predictions for train
+pred_train_env_hybrid <- pred_train_env_hybrid[, cols]
+colnames(pred_train_env_hybrid) <- c('Env', 'Hybrid', 'ytrue', 'ypred')
+fwrite(pred_train_env_hybrid, paste0('output/cv', cv, '/pred_train_gblup_env_hybrid_model.csv'))
 

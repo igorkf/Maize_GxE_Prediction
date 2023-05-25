@@ -218,9 +218,11 @@ if __name__ == '__main__':
         model.fit(xtrain, ytrain)
 
         # predict
+        ypred_train = model.predict(xtrain)
         ypred = model.predict(xval)
 
         # validate
+        df_eval_train = create_df_eval(xtrain, ytrain, ypred_train)
         df_eval = create_df_eval(xval, yval, ypred)
         _ = avg_rmse(df_eval)
         
@@ -285,9 +287,11 @@ if __name__ == '__main__':
         df_feat_imp.to_csv(feat_imp_outfile, index=False)
 
         # predict
+        ypred_train = model.predict(xtrain)
         ypred = model.predict(xval)
 
         # validate
+        df_eval_train = create_df_eval(xtrain, ytrain, ypred_train)
         df_eval = create_df_eval(xval, yval, ypred)
         _ = avg_rmse(df_eval)
 
@@ -295,4 +299,5 @@ if __name__ == '__main__':
     outfile = f'{outfile}.csv'
     print('Writing file:', outfile, '\n')
     df_eval.to_csv(outfile, index=False)
+    df_eval_train.to_csv(outfile.replace('oof_', 'pred_train_'), index=False)
 
