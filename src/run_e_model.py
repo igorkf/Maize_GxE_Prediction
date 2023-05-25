@@ -37,13 +37,9 @@ if __name__ == '__main__':
     xval = xval.set_index(['Env', 'Hybrid'])
     xtest = xtest.set_index(['Env', 'Hybrid'])
 
-    # set factor variable
-    xtrain['Field_Location'] = xtrain['Field_Location'].astype('category')
-    xval['Field_Location'] = xval['Field_Location'].astype('category')
-    xtest['Field_Location'] = xtest['Field_Location'].astype('category')
+    print('Tuning.')
 
     # silent lgbm warnings
-    print('Tuning.')
     with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
         optuna.logging.set_verbosity(optuna.logging.WARNING)  # silent optuna results
         study = optuna.create_study(direction='minimize', sampler=optuna.samplers.TPESampler(seed=42))

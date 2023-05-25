@@ -13,8 +13,7 @@ from preprocessing import (
     feat_eng_weather,
     feat_eng_soil,
     feat_eng_target,
-    extract_target,
-    create_field_location
+    extract_target
 )
 
 
@@ -45,7 +44,7 @@ META_TRAIN_PATH = 'data/Training_Data/2_Training_Meta_Data_2014_2021.csv'
 META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 
 META_COLS = ['Env', 'weather_station_lat', 'weather_station_lon', 'treatment_not_standard']
-CAT_COLS = ['Env', 'Hybrid', 'Field_Location']  # to avoid NA imputation
+CAT_COLS = ['Env', 'Hybrid']  # to avoid NA imputation
 
 LAT_BIN_STEP = 1.2
 LON_BIN_STEP = LAT_BIN_STEP * 3
@@ -119,12 +118,13 @@ if __name__ == '__main__':
     xtest = xtest.merge(xtest_ec, on='Env', how='left')
 
     # feat eng (target)
-    xtrain = create_field_location(xtrain)
-    xval = create_field_location(xval)
-    xtest = create_field_location(xtest)
+    xtrain['Field_Location'] = xtrain['Env'].str.replace('(_).*', '', regex=True)
+    xval['Field_Location'] = xval['Env'].str.replace('(_).*', '', regex=True)
+    xtest['Field_Location'] = xtest['Env'].str.replace('(_).*', '', regex=True)
     xtrain = xtrain.merge(feat_eng_target(trait, ref_year=YTRAIN_YEAR, lag=2), on='Field_Location', how='left')
     xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=2), on='Field_Location', how='left')
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left')
+    del xtrain['Field_Location'], xval['Field_Location'], xtest['Field_Location']
 
     # weather-location interaction and lat/lon binning
     for dfs in [xtrain, xval, xtest]:
