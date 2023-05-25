@@ -13,7 +13,8 @@ from preprocessing import (
     feat_eng_weather,
     feat_eng_soil,
     feat_eng_target,
-    extract_target
+    extract_target,
+    create_field_location
 )
 
 
@@ -118,9 +119,9 @@ if __name__ == '__main__':
     xtest = xtest.merge(xtest_ec, on='Env', how='left')
 
     # feat eng (target)
-    xtrain['Field_Location'] = xtrain['Env'].str.replace('(_).*', '', regex=True)
-    xval['Field_Location'] = xval['Env'].str.replace('(_).*', '', regex=True)
-    xtest['Field_Location'] = xtest['Env'].str.replace('(_).*', '', regex=True)
+    xtrain = create_field_location(xtrain)
+    xval = create_field_location(xval)
+    xtest = create_field_location(xtest)
     xtrain = xtrain.merge(feat_eng_target(trait, ref_year=YTRAIN_YEAR, lag=2), on='Field_Location', how='left')
     xval = xval.merge(feat_eng_target(trait, ref_year=YVAL_YEAR, lag=2), on='Field_Location', how='left')
     xtest = xtest.merge(feat_eng_target(trait, ref_year=YTEST_YEAR, lag=2), on='Field_Location', how='left')

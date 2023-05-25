@@ -8,6 +8,7 @@ import lightgbm as lgbm
 from sklearn.decomposition import TruncatedSVD
 import optuna
 
+from preprocessing import create_field_location
 from evaluate import create_df_eval, avg_rmse, feat_imp
 from tune import objective
 
@@ -198,6 +199,17 @@ if __name__ == '__main__':
     # run model
     if not args.svd:
         outfile = f'{outfile}_full'
+
+        # add factor
+        xtrain = xtrain.reset_index()
+        xtrain = create_field_location(xtrain)
+        xtrain['Field_Location'] = xtrain['Field_Location'].astype('category')
+        xtrain = xtrain.set_index(['Env', 'Hybrid'])
+        xval = xval.reset_index()
+        xval = create_field_location(xval)
+        xval['Field_Location'] = xval['Field_Location'].astype('category')
+        xval = xval.set_index(['Env', 'Hybrid'])
+
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
 
@@ -239,6 +251,17 @@ if __name__ == '__main__':
 
     # tune model if using svd features
     if args.svd:
+
+        # add factor
+        xtrain = xtrain.reset_index()
+        xtrain = create_field_location(xtrain)
+        xtrain['Field_Location'] = xtrain['Field_Location'].astype('category')
+        xtrain = xtrain.set_index(['Env', 'Hybrid'])
+        xval = xval.reset_index()
+        xval = create_field_location(xval)
+        xval['Field_Location'] = xval['Field_Location'].astype('category')
+        xval = xval.set_index(['Env', 'Hybrid'])
+
         print('Tuning.')
 
         # silent lgbm warnings

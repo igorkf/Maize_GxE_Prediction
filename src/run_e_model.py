@@ -7,7 +7,7 @@ import pandas as pd
 import lightgbm as lgbm
 import optuna
 
-from preprocessing import process_test_data
+from preprocessing import process_test_data, create_field_location
 from evaluate import create_df_eval, avg_rmse, feat_imp
 from tune import objective
 
@@ -31,6 +31,14 @@ if __name__ == '__main__':
     xtest = pd.read_csv(OUTPUT_PATH / 'xtest.csv')
     ytrain = pd.read_csv(OUTPUT_PATH / 'ytrain.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
     yval = pd.read_csv(OUTPUT_PATH / 'yval.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
+
+    # add factor
+    xtrain = create_field_location(xtrain)
+    xtrain['Field_Location'] = xtrain['Field_Location'].astype('category')
+    xval = create_field_location(xval)
+    xval['Field_Location'] = xval['Field_Location'].astype('category')
+    xtest = create_field_location(xtest)
+    xtest['Field_Location'] = xtest['Field_Location'].astype('category')
 
     # set index
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
