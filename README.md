@@ -116,7 +116,6 @@ JOBID1=$(sbatch --parsable run_job1.sh)
 sbatch --dependency=afterok:$JOBID1 run_job_gblupcv0.sh
 sbatch --dependency=afterok:$JOBID1 run_job_gblupcv1.sh
 sbatch --dependency=afterok:$JOBID1 run_job_gblupcv2.sh
-
 JOBID2=$(sbatch --dependency=afterok:$JOBID1 --parsable run_job_kroneckers.sh)
 sbatch --dependency=afterok:$JOBID2 run_job2.sh
 ```

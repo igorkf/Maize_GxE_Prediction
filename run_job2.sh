@@ -2,9 +2,9 @@
 
 #SBATCH --job-name=maize2
 #SBATCH --output=logs/job_part2.txt
-#SBATCH --partition comp72
+#SBATCH --partition himem72
 #SBATCH --nodes=1
-#SBATCH --tasks-per-node=32
+#SBATCH --tasks-per-node=24
 #SBATCH --time=30:00:00
 
 ## configs 
