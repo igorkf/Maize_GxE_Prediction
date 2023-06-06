@@ -2,10 +2,10 @@
 
 #SBATCH --job-name=maize1
 #SBATCH --output=logs/job_part1.txt
-#SBATCH --partition comp06
+#SBATCH --partition comp72
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=32
-#SBATCH --time=6:00:00
+#SBATCH --time=72:00:00
 
 ## configs 
 module purge
