@@ -210,6 +210,9 @@ if __name__ == '__main__':
         xval['Field_Location'] = xval['Field_Location'].astype('category')
         xval = xval.set_index(['Env', 'Hybrid'])
 
+        # make sure all columns are the same
+        xval = xval[xtrain.columns]
+
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
 
