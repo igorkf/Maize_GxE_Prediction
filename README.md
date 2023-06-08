@@ -2,7 +2,20 @@
 
 ### Download the data
 
-Download the data [here](https://drive.google.com/drive/folders/1leYJY4bA3341S-JxjBIgmmAWMwVDHYRb), extract it, and put both `Training_Data` and `Testing_Data` folders on the `data` folder. Unzip the vcf file too.
+Download the data [here](https://doi.org/10.25739/tq5e-ak26), extract it, and put both `Training_Data` and `Testing_Data` folders inside the `data` folder. Unzip the VCF file `Training_Data/5_Genotype_Data_All_Years.vcf.zip`.
+
+The folder structure should look as follows:
+```
+├── data
+│   ├── Training_Data
+│   └── Testing_Data
+├── src
+├── logs
+├── output
+│   ├── cv0
+│   ├── cv1
+│   └── cv2
+```
 
 We runned the models in a cluster, so you can skip the next hidden block: 
 <details>
@@ -59,6 +72,7 @@ install.packages("arrow")
 install.packages("data.table")
 install.packages("AGHmatrix")
 install.packages("devtools")
+install.packages("asreml")  # for gblup
 
 # from github source
 setRepositories(ind = 1:2)
@@ -118,17 +132,5 @@ sbatch --dependency=afterok:$JOBID1 run_job_gblupcv1.sh
 sbatch --dependency=afterok:$JOBID1 run_job_gblupcv2.sh
 JOBID2=$(sbatch --dependency=afterok:$JOBID1 --parsable run_job_kroneckers.sh)
 sbatch --dependency=afterok:$JOBID2 run_job2.sh
-```
-
---------------
-
-
-******
-
-### Results
-
-You can compare the results side by side. For example, to compare models from CV0:
-```
-pr -w $COLUMNS -m -t logs/e_model_cv0.txt logs/g_model_A_svd_cv0.txt logs/g_model_D_svd_cv0.txt logs/g_model_epiAA_epiDD_epiAD_svd_cv0.txt logs/g_model_A_D_epiAA_epiDD_epiAD_svd_cv0.txt
 ```
 
