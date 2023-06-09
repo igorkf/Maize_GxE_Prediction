@@ -6,15 +6,15 @@ Download the data [here](https://doi.org/10.25739/tq5e-ak26), extract it, and pu
 
 The folder structure should look as follows:
 ```
-├── data
-│   ├── Training_Data
-│   └── Testing_Data
-├── src
-├── logs
-├── output
-│   ├── cv0
-│   ├── cv1
-│   └── cv2
+├── data/
+│   ├── Training_Data/
+│   └── Testing_Data/
+├── src/
+├── logs/
+├── output/
+│   ├── cv0/
+│   ├── cv1/
+│   └── cv2/
 ```
 
 We runned the models in a cluster, so you can skip the next hidden block: 
