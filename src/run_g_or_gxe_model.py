@@ -21,6 +21,7 @@ parser.add_argument('--D', action='store_true', default=False)
 parser.add_argument('--epiAA', action='store_true', default=False)
 parser.add_argument('--epiDD', action='store_true', default=False)
 parser.add_argument('--epiAD', action='store_true', default=False)
+parser.add_argument('--E', action='store_true', default=False)
 parser.add_argument('--svd', action='store_true', default=False)
 parser.add_argument('--n_components', type=int, default=100)
 parser.add_argument('--lag_features', action='store_true', default=False)
@@ -160,6 +161,12 @@ if __name__ == '__main__':
             kroneckers_val.append(xval)
             del xval
 
+    if args.E:
+        print('Using E matrix.')
+        outfile = f'{outfile}_E'
+        Etrain = pd.read_csv(OUTPUT_PATH / 'xtrain.csv')
+        Eval = pd.read_csv(OUTPUT_PATH / 'xval.csv')
+
     if (args.model == 'G' and len(kinships) == 0) or (args.model == 'GxE' and len(kroneckers_train) == 0):
         raise Exception('Choose at least one matrix.')
     
@@ -212,6 +219,15 @@ if __name__ == '__main__':
 
         # make sure all columns are the same
         xval = xval[xtrain.columns]
+
+        # include E matrix if requested
+        if args.E:
+            lag_cols = xtrain.filter(regex='_lag', axis=1).columns
+            if len(lag_cols) > 0:
+                xtrain = xtrain.drop(lag_cols, axis=1)
+                xval = xval.drop(lag_cols, axis=1)
+            xtrain = xtrain.merge(Etrain, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
+            xval = xval.merge(Eval, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
 
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
@@ -266,6 +282,15 @@ if __name__ == '__main__':
         xval = create_field_location(xval)
         xval['Field_Location'] = xval['Field_Location'].astype('category')
         xval = xval.set_index(['Env', 'Hybrid'])
+
+        # include E matrix if requested
+        if args.E:
+            lag_cols = xtrain.filter(regex='_lag', axis=1).columns
+            if len(lag_cols) > 0:
+                xtrain = xtrain.drop(lag_cols, axis=1)
+                xval = xval.drop(lag_cols, axis=1)
+            xtrain = xtrain.merge(Etrain, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
+            xval = xval.merge(Eval, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
 
         print('Tuning.')
 

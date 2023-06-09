@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=maize2
+#SBATCH --job-name=maizesup
 #SBATCH --output=logs/job_part_supplementary.txt
 #SBATCH --partition himem72
 #SBATCH --nodes=1
