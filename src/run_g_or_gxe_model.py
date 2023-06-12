@@ -190,6 +190,15 @@ if __name__ == '__main__':
     yval = xval['Yield_Mg_ha']
     del xval['Yield_Mg_ha']
 
+    # include E matrix if requested
+    if args.E:
+        xtrain = xtrain.merge(Etrain, on=['Env', 'Hybrid'], how='left').copy().set_index(['Env', 'Hybrid'])
+        xval = xval.merge(Eval, on=['Env', 'Hybrid'], how='left').copy().set_index(['Env', 'Hybrid'])
+        lag_cols = xtrain.filter(regex='_lag', axis=1).columns
+        if len(lag_cols) > 0:
+            xtrain = xtrain.drop(lag_cols, axis=1)
+            xval = xval.drop(lag_cols, axis=1)
+
     # bind lagged yield features
     no_lags_cols = [x for x in xtrain.columns.tolist() if x not in ['Env', 'Hybrid']]
     if args.lag_features:
@@ -282,15 +291,6 @@ if __name__ == '__main__':
         xval = create_field_location(xval)
         xval['Field_Location'] = xval['Field_Location'].astype('category')
         xval = xval.set_index(['Env', 'Hybrid'])
-
-        # include E matrix if requested
-        if args.E:
-            lag_cols = xtrain.filter(regex='_lag', axis=1).columns
-            if len(lag_cols) > 0:
-                xtrain = xtrain.drop(lag_cols, axis=1)
-                xval = xval.drop(lag_cols, axis=1)
-            xtrain = xtrain.merge(Etrain, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
-            xval = xval.merge(Eval, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
 
         print('Tuning.')
 
