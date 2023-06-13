@@ -24,11 +24,11 @@ META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 
 
 if __name__ == '__main__':
-    df_sub = process_test_data(TEST_PATH).reset_index()[['Env', 'Hybrid']]
+    # df_sub = process_test_data(TEST_PATH).reset_index()[['Env', 'Hybrid']]
 
     xtrain = pd.read_csv(OUTPUT_PATH / 'xtrain.csv')
     xval = pd.read_csv(OUTPUT_PATH / 'xval.csv')
-    xtest = pd.read_csv(OUTPUT_PATH / 'xtest.csv')
+    # xtest = pd.read_csv(OUTPUT_PATH / 'xtest.csv')
     ytrain = pd.read_csv(OUTPUT_PATH / 'ytrain.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
     yval = pd.read_csv(OUTPUT_PATH / 'yval.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
 
@@ -37,13 +37,13 @@ if __name__ == '__main__':
     xtrain['Field_Location'] = xtrain['Field_Location'].astype('category')
     xval = create_field_location(xval)
     xval['Field_Location'] = xval['Field_Location'].astype('category')
-    xtest = create_field_location(xtest)
-    xtest['Field_Location'] = xtest['Field_Location'].astype('category')
+    # xtest = create_field_location(xtest)
+    # xtest['Field_Location'] = xtest['Field_Location'].astype('category')
 
     # set index
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
     xval = xval.set_index(['Env', 'Hybrid'])
-    xtest = xtest.set_index(['Env', 'Hybrid'])
+    # xtest = xtest.set_index(['Env', 'Hybrid'])
 
     print('Tuning.')
 
@@ -85,10 +85,3 @@ if __name__ == '__main__':
     # df_sub['Yield_Mg_ha'] = model.predict(xtest)
     # df_sub.to_csv('output/submission.csv', index=False)
     
-    # observed X predicted statistics
-    # obs_vs_pred = pd.concat([
-    #     df_eval['ytrue'].rename('observed').describe(),
-    #     df_eval['yhat'].rename('predicted').describe(),
-    #     df_sub['Yield_Mg_ha'].rename('submission').describe()
-    # ], axis=1)
-    # print(obs_vs_pred)
