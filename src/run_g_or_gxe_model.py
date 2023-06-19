@@ -162,10 +162,13 @@ if __name__ == '__main__':
             del xval
 
     if args.E:
-        print('Using E matrix.')
-        outfile = f'{outfile}_E'
-        Etrain = pd.read_csv(OUTPUT_PATH / 'xtrain.csv')
-        Eval = pd.read_csv(OUTPUT_PATH / 'xval.csv')
+        if args.model == 'G':
+            print('Using E matrix.')
+            outfile = f'{outfile}_E'
+            Etrain = pd.read_csv(OUTPUT_PATH / 'xtrain.csv')
+            Eval = pd.read_csv(OUTPUT_PATH / 'xval.csv')
+        else:
+            raise Exception('GxE+E is not implemented.')
 
     if (args.model == 'G' and len(kinships) == 0) or (args.model == 'GxE' and len(kroneckers_train) == 0):
         raise Exception('Choose at least one matrix.')
@@ -209,8 +212,9 @@ if __name__ == '__main__':
         xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
     
     if args.model == 'GxE':
-        xtrain = xtrain.set_index(['Env', 'Hybrid'])
-        xval = xval.set_index(['Env', 'Hybrid'])
+        if 'Env' in xtrain.columns and 'Hybrid' in xtrain.columns:
+       	    xtrain = xtrain.set_index(['Env', 'Hybrid'])
+            xval = xval.set_index(['Env', 'Hybrid'])
     
     # run model
     if not args.svd:
