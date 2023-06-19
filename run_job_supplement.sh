@@ -42,6 +42,19 @@ do
     echo '[G] epiAA epiDD epiAD model ok' &&
 
     python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --A --D --epiAA --epiDD --epiAD > "logs/g_model_A_D_epiAA_epiDD_epiAD_full_cv${cv}.txt" &&
-    echo '[G] A D epiAA epiDD epiAD model ok'
+    echo '[G] A D epiAA epiDD epiAD model ok' && 
+
+    ## g+e models
+    python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --A --E > "logs/g_model_A_E_full_cv${cv}.txt" &&
+    echo '[G+E] A model ok' &&
+ 
+    python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --D --E > "logs/g_model_D_E_full_cv${cv}.txt" &&
+    echo '[G+E] D model ok' &&
+  
+    python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --epiAA --epiDD --epiAD --E > "logs/g_model_epiAA_epiDD_epiAD_E_full_cv${cv}.txt" &&
+    echo '[G+E] epiAA epiDD epiAD model ok' &&
+  
+    python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --A --D --epiAA --epiDD --epiAD --E > "logs/g_model_A_D_epiAA_epiDD_epiAD_E_full_cv${cv}.txt" &&
+    echo '[G+E] A D epiAA epiDD epiAD model ok'
 done
 
