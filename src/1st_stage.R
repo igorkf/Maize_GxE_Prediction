@@ -7,9 +7,23 @@ asreml.options(
   na.action = na.method(y = 'include', x = 'omit')
 )
 
+
 plot_predictions <- function(env, pred) {
   plot((droplevels(data[data$Env == env, ]) |> group_by(Hybrid) %>% summarise(mean = mean(Yield_Mg_ha)) |> pull(mean)), pred$predicted.value)
 }
+
+
+plot_field <- function(env) {
+  desplot::desplot(
+    data[data$Env == env, ],
+    Block ~ Range + Pass,
+    out1 = Experiment,
+    text = Replicate,
+    cex = 1,
+    ticks = T
+  )
+}
+
 
 envs2020 <- c('DEH1_2020', 'GAH1_2020', 'GAH2_2020', 'GEH1_2020', 'IAH1_2020', 'INH1_2020', 'MIH1_2020', 'MNH1_2020', 'NCH1_2020', 'NEH1_2020', 'NEH2_2020',
           'NEH3_2020', 'NYH2_2020', 'NYH3_2020', 'NYS1_2020', 'SCH1_2020','TXH1_2020', 'TXH2_2020', 'TXH3_2020', 'WIH1_2020', 'WIH2_2020', 'WIH3_2020')
@@ -32,58 +46,64 @@ for (variable in c('Env', 'Experiment', 'Replicate', 'Block', 'rep', 'Plot', 'Ra
   data[, variable] <- factor(data[, variable])
 }
 
+# droplevels(data[(grepl('^W10', data$Hybrid) == FALSE) & (data$Year == 2020), ])$Hybrid 
 
+
+
+library(ggplot2)
+library(dplyr)
 data |>
-  filter(Env == envs[3]) |>
+  filter(Env == envs[2]) |>
   ggplot(aes(x = Yield_Mg_ha, color = Experiment)) +
-  geom_histogram()
+  geom_density()
 
+plot_field('NCH1_2020')
+with(droplevels(data[data$Env == envs[2], ]), table(Hybrid, Block))
 
-
-desplot::desplot(
-  data[data$Env == envs[1], ],
-  Block ~ Range + Pass,
-  out1 = Experiment,
-  text = Replicate,
-  cex = 1.5,
-  ticks = T
-)
-
+# NYS1_2020 has one block only
+plot_field('NYS1_2020')
 
 
 # single-environment models
+# Y = mu + Hybrid + R + (1 | Replicate:Block) + e
+
 deh1 <- asreml(
-  Yield_Mg_ha ~ Experiment:Block + Hybrid,
-  random = ~ Range + Pass + units,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[1]
 )
+deh1 <- update.asreml(deh1)
 pred_deh1 <- predict.asreml(deh1, classify = 'Hybrid')$pvals[, 1:2]
 pred_deh1$Env <- envs[1]
 
 
 gah1 <- asreml(
-  Yield_Mg_ha ~ rep + Hybrid,
-  random = ~ Range + Pass,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[2]
 )
+gah1 <- update.asreml(gah1)
+gah1 <- update.asreml(gah1)
 pred_gah1 <- predict.asreml(gah1, classify = 'Hybrid')$pvals[, 1:2]
 pred_gah1$Env <- envs[2]
 
 
 gah2 <- asreml(
-  Yield_Mg_ha ~ Experiment + Experiment:rep + Hybrid,
-  random = ~ Experiment:Range,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range,
   data = data,
   subset = data$Env == envs[3]
 )
-pred_gah2 <- predict.asreml(gah2, classify = 'Hybrid', present = c('Experiment', 'rep'))$pvals[, 1:2]
+gah2 <- update.asreml(gah2)
+pred_gah2 <- predict.asreml(gah2, classify = 'Hybrid')$pvals[, 1:2]
 pred_gah2$Env <- envs[3]
 
 
 geh1 <- asreml(
-  Yield_Mg_ha ~ rep + Hybrid,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block,
   data = data,
   subset = data$Env == envs[4]
 )
@@ -92,54 +112,53 @@ pred_geh1$Env <- envs[4]
 
 
 iah1 <- asreml(
-  Yield_Mg_ha ~ Experiment + Experiment:rep + Hybrid,
-  random = ~ Experiment:Range + Experiment:Pass,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[5]
 )
 iah1 <- update.asreml(iah1)
-pred_iah1 <- predict.asreml(iah1, classify = 'Hybrid', present = c('Experiment', 'rep'))$pvals[, 1:2]
+pred_iah1 <- predict.asreml(iah1, classify = 'Hybrid')$pvals[, 1:2]
 pred_iah1$Env <- envs[5]
 
 
 inh1 <- asreml(
-  Yield_Mg_ha ~ Experiment + Hybrid,
-  random = ~ Experiment:Range + Experiment:Pass,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[6]
 )
-inh1 <- update.asreml(inh1)
 pred_inh1 <- predict.asreml(inh1, classify = 'Hybrid')$pvals[, 1:2]
 pred_inh1$Env <- envs[6]
 
 
 mih1 <- asreml(
-  Yield_Mg_ha ~ Experiment + Experiment:rep + Hybrid,
-  random = ~ Experiment:Range + Experiment:Pass,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[7]
 )
-pred_mih1 <- predict.asreml(mih1, classify = 'Hybrid', present = c('Experiment', 'rep'))$pvals[, 1:2]
+pred_mih1 <- predict.asreml(mih1, classify = 'Hybrid')$pvals[, 1:2]
 pred_mih1$Env <- envs[7]
 
 
 mnh1 <- asreml(
-  Yield_Mg_ha ~ Experiment + Hybrid,
-  random = ~ Experiment:Range + Experiment:Pass,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[8]
 )
-mnh1 <- update.asreml(mnh1)
 pred_mnh1 <- predict.asreml(mnh1, classify = 'Hybrid')$pvals[, 1:2]
 pred_mnh1$Env <- envs[8]
 
 
 nch1 <- asreml(
-  Yield_Mg_ha ~ Experiment + Hybrid,
-  random = ~ Experiment:Range + Experiment:Pass,
+  Yield_Mg_ha ~ Hybrid + Replicate,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[9]
 )
+nch1 <- update.asreml(nch1)
 pred_nch1 <- predict.asreml(nch1, classify = 'Hybrid')$pvals[, 1:2]
 pred_nch1$Env <- envs[9]
 
@@ -262,14 +281,13 @@ pred_wih1$Env <- envs[20]
 
 
 wih2 <- asreml(
-  Yield_Mg_ha ~ Experiment + Experiment:rep + Hybrid,
-  random = ~ Experiment:Range + Experiment:Pass,
-  residual = ~dsum(~units|Experiment),
+  Yield_Mg_ha ~ Replicate + Hybrid,
+  random = ~ Replicate:Block + Range + Pass,
   data = data,
   subset = data$Env == envs[21]
 )
 wih2 <- update.asreml(wih2)
-pred_wih2 <- predict.asreml(wih2, classify = 'Hybrid', present = c('Experiment', 'rep'))$pvals[, 1:2]
+pred_wih2 <- predict.asreml(wih2, classify = 'Hybrid')$pvals[, 1:2]
 pred_wih2$Env <- envs[21]
 
 
