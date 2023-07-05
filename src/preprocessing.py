@@ -35,16 +35,23 @@ def lat_lon_to_bin(x, step: float):
 def agg_yield(df: pd.DataFrame):
     df_agg = (
         df
-        .groupby(['Env', 'Hybrid'])  # hybrid is here only to not lose the reference
+        .groupby(['Env', 'Hybrid'])
         .agg(
             weather_station_lat=('weather_station_lat', 'mean'),
             weather_station_lon=('weather_station_lon', 'mean'),
             treatment_not_standard=('treatment_not_standard', 'mean'),
-            Yield_Mg_ha=('Yield_Mg_ha', 'mean')  # the target
+            Yield_Mg_ha=('Yield_Mg_ha', 'mean')  # unadjusted means per env/hybrid combination
         )
         .reset_index()
     )
     return df_agg
+
+
+def process_blues(df: pd.DataFrame):
+    df['predicted.value'] = df.apply(lambda x: x['Yield_Mg_ha'] if x['predicted.value'] < 0 else x['predicted.value'], axis=1)
+    df = df.drop('Yield_Mg_ha', axis=1)
+    df = df.rename(columns={'predicted.value': 'Yield_Mg_ha'})
+    return df
 
 
 def feat_eng_weather(df: pd.DataFrame):

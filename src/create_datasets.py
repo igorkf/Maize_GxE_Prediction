@@ -10,6 +10,7 @@ from preprocessing import (
     lat_lon_to_bin,
     split_train_val,
     agg_yield,
+    process_blues,
     feat_eng_weather,
     feat_eng_soil,
     feat_eng_target,
@@ -81,10 +82,17 @@ if __name__ == '__main__':
     # split train/val
     xtrain, xval = split_train_val(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
 
-    # agg yield
+    # agg yield (unadjusted means)
     xtrain = agg_yield(xtrain)
     xval = agg_yield(xval)
-    xtest = agg_yield(xtest)
+    # xtest = agg_yield(xtest)
+
+    # replace unadjusted means by BLUEs
+    blues = pd.read_csv('output/blues.csv')
+    xtrain = xtrain.merge(blues, on=['Env', 'Hybrid'], how='left')
+    xtrain = process_blues(xtrain)
+    xval = xval.merge(blues, on=['Env', 'Hybrid'], how='left')
+    xval = process_blues(xval)
 
     # feat eng (weather)
     weather_feats = feat_eng_weather(weather)

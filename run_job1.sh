@@ -16,6 +16,9 @@ conda deactivate
 conda activate maize_gxe_prediction
 
 ## run
+## Create BLUEs:
+Rscript src/blues.R > logs/blues.txt
+
 ## Create all datasets:
 ./run_cv_datasets.sh
 

@@ -3,8 +3,7 @@ library(asreml)
 asreml.options(
   workspace = '4gb',
   pworkspace = '4gb',
-  maxit = 300,
-  na.action = na.method(y = 'include', x = 'omit')
+  maxit = 300
 )
 
 plot_field <- function(env) {
@@ -90,7 +89,7 @@ for (env in envs) {
 }
 
 blues$Env <- as.factor(blues$Env)
-write.csv(blues[, c('Env', 'Hybrid', 'predicted.value')], 'output/blues.csv')
+write.csv(blues[, c('Env', 'Hybrid', 'predicted.value')], 'output/blues.csv', row.names = F)
 
 # compare unadjusted means
 # ytrain <- rbind(read.csv('output/cv0/ytrain.csv'), read.csv('output/cv1/ytrain.csv'))

@@ -81,6 +81,12 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 
 
 ### Preprocessing
+
+Create BLUEs:
+```
+Rscript src/blues.R
+```
+
 Create all datasets:
 ```
 ./run_cv_datasets.sh
