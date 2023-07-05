@@ -9,7 +9,7 @@
 
 ## configs 
 module purge
-module load gcc/9.3.1 mkl/19.0.5 R/4.2.2
+module load gcc/9.3.1 mkl/19.0.5
 module load python/anaconda-3.10
 source /share/apps/bin/conda-3.10.sh
 conda deactivate
@@ -18,7 +18,6 @@ conda activate maize_gxe_prediction
 ## run
 for cv in 0 1 2
 do
-    ## gxe models
     python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=GxE --A > "logs/gxe_model_A_full_cv${cv}.txt" &&
     echo '[GxE] A model ok' &&
 
@@ -30,8 +29,8 @@ do
 
     python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=GxE --A --D --epiAA --epiDD --epiAD > "logs/gxe_model_A_D_epiAA_epiDD_epiAD_full_cv${cv}.txt" &&
     echo '[GxE] A D epiAA epiDD epiAD model ok' &&
-    
-    ## g models
+
+
     python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --A > "logs/g_model_A_full_cv${cv}.txt" &&
     echo '[G] A model ok' &&
 
@@ -44,7 +43,7 @@ do
     python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --A --D --epiAA --epiDD --epiAD > "logs/g_model_A_D_epiAA_epiDD_epiAD_full_cv${cv}.txt" &&
     echo '[G] A D epiAA epiDD epiAD model ok' && 
 
-    ## g+e models
+
     python3 -u src/run_g_or_gxe_model.py --cv=${cv} --model=G --A --E > "logs/g_model_A_E_full_cv${cv}.txt" &&
     echo '[G+E] A model ok' &&
  
