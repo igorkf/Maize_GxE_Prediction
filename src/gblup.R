@@ -96,6 +96,17 @@ if (invert == TRUE) {
   )
 }
 gc()
+varcomp <- summary(mod)$varcomp
+varcomp <- transform(varcomp, component = round(component, 8))
+print(varcomp)
+fa_comps <- nrow(varcomp) - 1  # -1 due sigma_R
+cat('Number of components estimated for FA(1):', fa_comps, '\n')
+
+# FA number of estimated components is E(k+1) - k(k-1)/2, where E is the number of environments and k is the FA order
+E <- length(unique(ytrain$Field_Location))
+k <- 1
+exp_fa_comps <- E * (k + 1) - 0.5 * k * (k - 1)
+cat('Number of componentes expected from formula (E(k+1) - k(k-1)/2):', exp_fa_comps, '\n')
 
 evaluate <- function(df) {
   df$error <- df$Yield_Mg_ha - df$predicted.value
