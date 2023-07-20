@@ -116,5 +116,5 @@ fwrite(pred_env_hybrid, paste0('output/cv', cv, '/oof_gblup_bglr_model.csv'))
 
 # compare with asreml model predictions
 asr <- read.csv(paste0('output/cv', cv, '/oof_gblup_env_hybrid_model.csv'))
-cat('Correlation between asreml and BGLR predictions:\n', cor(asr$ypred, pred_env_hybrid$ypred))
+cat('Correlation between asreml and BGLR predictions:\n', cor(asr$ypred, pred_env_hybrid$ypred), '\n')
 
