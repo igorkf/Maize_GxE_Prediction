@@ -28,4 +28,3 @@ python3 -u src/create_individuals.py
 ## Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
 ./run_vcf_filtering.sh
 ./run_kinships.sh
-

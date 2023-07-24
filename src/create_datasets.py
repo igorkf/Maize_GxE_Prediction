@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+import random
 
 import pandas as pd
 from sklearn.decomposition import TruncatedSVD
@@ -39,6 +40,7 @@ elif args.cv == 2:
     YTRAIN_YEAR = 2021  # for split it uses 2020 and 2021
     YVAL_YEAR = 2021
     YTEST_YEAR = 2022
+print('Using fold', args.fold)
 
 OUTPUT_PATH = Path(f'output/cv{args.cv}')
 TRAIT_PATH = 'data/Training_Data/1_Training_Trait_Data_2014_2021.csv'
@@ -67,6 +69,10 @@ if __name__ == '__main__':
     # TRAIT
     trait = pd.read_csv(TRAIT_PATH)
     trait = trait.merge(meta[META_COLS], on='Env', how='left')
+    trait = create_field_location(trait)
+
+    # agg yield (unadjusted means)
+    trait = agg_yield(trait)
 
     # WEATHER
     weather = pd.read_csv('data/Training_Data/4_Training_Weather_Data_2014_2021.csv')
@@ -81,24 +87,22 @@ if __name__ == '__main__':
     ec_test = pd.read_csv('data/Testing_Data/6_Testing_EC_Data_2022.csv').set_index('Env')
 
     # fold assignment
+    random.seed(42)
     df_folds = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
     xval = df_folds[df_folds['fold'] == args.fold].drop('fold', axis=1).reset_index(drop=True)
     if args.cv == 0:
         xtrain = df_folds[df_folds['fold'] == 99].drop('fold', axis=1).reset_index(drop=True)
-        xtrain = create_field_location(xtrain)
-        xval = create_field_location(xval)
-        xtrain = xtrain[(xtrain['Hybrid'].isin(xval['Hybrid'])) & (xtrain['Field_Location'].isin(xval['Field_Location']))].reset_index(drop=True)
+        print('val to train ratio:', len(set(xval['Hybrid'])) / len(set(xtrain['Hybrid'])))
+        candidates = list(set(df_folds['Hybrid']) - set(xval['Hybrid']))
+        selected = random.choices(candidates, k=int(len(candidates) * 0.6))
+        xtrain = xtrain[xtrain['Hybrid'].isin(selected + xval['Hybrid'].tolist())].reset_index(drop=True)
         assert set(xtrain['Year']) & set(xval['Year']) == set()
         assert set(xtrain['Field_Location']) == set(xval['Field_Location'])
-        assert set(xtrain['Hybrid']) == set(xval['Hybrid'])
-        del xtrain['Field_Location'], xval['Field_Location']
+        print('val to train ratio:', len(set(xval['Hybrid'])) / len(set(xtrain['Hybrid'])))
     else:
         xtrain = df_folds[df_folds['fold'] != args.fold].drop('fold', axis=1).reset_index(drop=True)
-
-    # agg yield (unadjusted means)
-    xtrain = agg_yield(xtrain)
-    xval = agg_yield(xval)
-    # xtest = agg_yield(xtest)
+    del xtrain['Field_Location'], xval['Field_Location']
+    del xtrain['Year'], xval['Year']
 
     # replace unadjusted means by BLUEs
     blues = pd.read_csv('output/blues.csv')
@@ -166,6 +170,11 @@ if __name__ == '__main__':
     xtrain = xtrain.set_index(['Env', 'Hybrid'])
     xval = xval.set_index(['Env', 'Hybrid'])
     xtest = xtest.set_index(['Env', 'Hybrid'])
+
+    # remove NA phenotype if needed
+    xtrain = xtrain[~xtrain['Yield_Mg_ha'].isnull()].reset_index(drop=True)
+    xval = xval[~xval['Yield_Mg_ha'].isnull()].reset_index(drop=True)
+    xtest = xtest[~xtest['Yield_Mg_ha'].isnull()].reset_index(drop=True)
 
     # extract targets
     ytrain = extract_target(xtrain)

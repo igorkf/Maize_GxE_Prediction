@@ -34,6 +34,7 @@ def lat_lon_to_bin(x, step: float):
 
 
 def agg_yield(df: pd.DataFrame):
+    df['Year'] = df['Env'].str[-4:].astype('int')
     df_agg = (
         df
         .groupby(['Env', 'Hybrid'])
@@ -41,6 +42,8 @@ def agg_yield(df: pd.DataFrame):
             weather_station_lat=('weather_station_lat', 'mean'),
             weather_station_lon=('weather_station_lon', 'mean'),
             treatment_not_standard=('treatment_not_standard', 'mean'),
+            Field_Location=('Field_Location', 'last'),
+            Year=('Year', 'last'),
             Yield_Mg_ha=('Yield_Mg_ha', 'mean')  # unadjusted means per env/hybrid combination
         )
         .reset_index()
@@ -150,17 +153,16 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
 
     # train in known hybrids, predict in unknown year
     if cv == 0:
-        train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
+        train = df[df['Year'].isin([val_year - 2, val_year - 1])].dropna(subset=['Yield_Mg_ha'])
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
-        known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
-        train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
-        val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        known_locations.remove('NYS1')
+        train = train[(train['Hybrid'].isin(vcfed_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        val = val[(val['Hybrid'].isin(vcfed_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
         train = train.sample(frac=1, random_state=42).reset_index(drop=True)
         val = val.sample(frac=1, random_state=42).reset_index(drop=True)
 
         # k-fold
-        # TODO: check CV0
         gkf = GroupKFold(n_splits=5)
         for i, (_, v) in enumerate(gkf.split(X=val, groups=val['Hybrid'])):
             val.loc[v, 'fold'] = i
@@ -204,6 +206,5 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
     else:
         raise NotImplementedError(f'cv = {cv} is not implemented.')
 
-    del df_folds['Field_Location']
     df_folds['fold'] = df_folds['fold'].astype('int')
     return df_folds

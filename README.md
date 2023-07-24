@@ -25,6 +25,8 @@ We runned the models in a cluster, so you can skip the next hidden block:
 module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools/0.1.15 plink/5.2
 module load python/anaconda-3.10
 source /share/apps/bin/conda-3.10.sh
+conda deactivate  # if base conda is activated
+conda activate maize_gxe_prediction
 
 # create .Rprofile
 cat ~/.Rprofile
@@ -107,9 +109,9 @@ python3 src/create_individuals.py
 
 ### Run models
 
-Run all CVs for E and G models:   
+Run all CVs for E models:   
 ```
-./run_cv_e_g_models.sh
+./run_cv_e_models.sh
 ```
 
 Run all CVs for Kroneckers:
