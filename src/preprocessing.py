@@ -158,34 +158,38 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
         train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
         val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        train = train.sample(frac=1, random_state=42).reset_index(drop=True)
+        val = val.sample(frac=1, random_state=42).reset_index(drop=True)
 
         # k-fold
         gkf = GroupKFold(n_splits=5)
-        for i, (_, v) in enumerate(gkf.split(X=val.drop('Yield_Mg_ha', axis=1), y=val['Yield_Mg_ha'], groups=val['Hybrid'])):
+        for i, (_, v) in enumerate(gkf.split(X=val, groups=val['Hybrid'])):
             val.loc[v, 'fold'] = i
-        train['fold'] = 99  # only a placeholder 
+        train['fold'] = 99.0  # only a placeholder 
 
-        print('# rows train after pruning:', len(train))
-        print('# rows val after pruning:', len(val))
-        del train['Field_Location'], val['Field_Location']
+        df_folds = pd.concat([train, val], axis=0, ignore_index=True)
+        del df_folds['Field_Location']
 
-    # train in known year, predict in unknown hybrids
+    # train in known environments, predict in unknown hybrids
     elif cv == 1:
-        train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])  # train on 2020 and 2021
+        train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
         train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
         val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
-        print('# unique hybrids in train before pruning:', len(set(train['Hybrid'])))
-        sampled_hybrids = val['Hybrid'].drop_duplicates().sample(frac=0.2, random_state=42)
-        train = train[~train['Hybrid'].isin(sampled_hybrids)].reset_index(drop=True)
-        print('# unique hybrids in train after pruning:', len(set(train['Hybrid'])))
-        del train['Field_Location'], val['Field_Location']
+
+        # k-fold
+        df_folds = pd.concat([train, val], axis=0, ignore_index=True).sample(frac=1, random_state=42).reset_index(drop=True)
+        gkf = GroupKFold(n_splits=5)
+        for i, (_, v) in enumerate(gkf.split(X=df_folds, groups=df_folds['Hybrid'])):
+            df_folds.loc[v, 'fold'] = i
+
+        del df_folds['Field_Location']
 
     # some environment/hybrid combinations are unknown
     elif cv == 2:
-        train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])  # train on 2020 and 2021
+        train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
@@ -203,4 +207,4 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
     else:
         raise NotImplementedError(f'cv = {cv} is not implemented.')
     
-    return train, val
+    return df_folds
