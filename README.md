@@ -72,7 +72,7 @@ install.packages("arrow")
 install.packages("data.table")
 install.packages("AGHmatrix")
 install.packages("devtools")
-install.packages("asreml")  # for gblup
+install.packages("asreml")  # for blues and gblup
 
 # from github source
 setRepositories(ind = 1:2)
@@ -82,22 +82,22 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 
 ### Preprocessing
 
-Create BLUEs:
+1. Create BLUEs:
 ```
 Rscript src/blues.R
 ```
 
-Create all datasets:
+2. Create all datasets:
 ```
 ./run_cv_datasets.sh
 ```
 
-Create a list of individuals to be used:
+3. Create a list of individuals to be used:
 ```
 python3 src/create_individuals.py
 ```
 
-Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
+4. Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
 ```
 ./run_vcf_filtering.sh
 ```
@@ -127,7 +127,7 @@ Run all CVs for GBLUP models:
 ./run_cv_gblup_models.sh
 ```
 
-Some files in `output` will be big (+6GB), particularly the Kronecker files, so you might want to exclude them later.
+Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later.
 
 ### If running in a cluster
 We used SLURM to schedule the jobs. To run all the jobs do:
