@@ -168,7 +168,6 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         train['fold'] = 99.0  # only a placeholder 
 
         df_folds = pd.concat([train, val], axis=0, ignore_index=True)
-        del df_folds['Field_Location']
 
     # train in known environments, predict in unknown hybrids
     elif cv == 1:
@@ -185,8 +184,6 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         for i, (_, v) in enumerate(gkf.split(X=df_folds, groups=df_folds['Hybrid'])):
             df_folds.loc[v, 'fold'] = i
 
-        del df_folds['Field_Location']
-
     # some environment/hybrid combinations are unknown
     elif cv == 2:
         train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])
@@ -197,14 +194,17 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
         train['Env_Hybrid'] = train['Env'] + ':' + train['Hybrid']
         val['Env_Hybrid'] = val['Env'] + ':' + val['Hybrid']
-        print('# unique env/hybrid in train before pruning:', len(set(train['Env_Hybrid'])))
-        sampled_env_hybrids = val.drop_duplicates(subset=['Env_Hybrid']).groupby('Env').sample(frac=0.2, random_state=42)['Env_Hybrid']
-        train = train[~train['Env_Hybrid'].isin(sampled_env_hybrids)].reset_index(drop=True)
-        print('# unique env/hybrid in train before pruning:', len(set(train['Env_Hybrid'])))
-        del train['Env_Hybrid'], val['Env_Hybrid']
-        del train['Field_Location'], val['Field_Location']
+
+        # k-fold
+        df_folds = pd.concat([train, val], axis=0, ignore_index=True).sample(frac=1, random_state=42).reset_index(drop=True)
+        gkf = GroupKFold(n_splits=5)
+        for i, (_, v) in enumerate(gkf.split(X=df_folds, groups=df_folds['Env_Hybrid'])):
+            df_folds.loc[v, 'fold'] = i
+        del df_folds['Env_Hybrid']
 
     else:
         raise NotImplementedError(f'cv = {cv} is not implemented.')
-    
+
+    del df_folds['Field_Location']
+    df_folds['fold'] = df_folds.astype('int')
     return df_folds
