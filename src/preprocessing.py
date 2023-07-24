@@ -1,6 +1,7 @@
 from math import floor
 
 import pandas as pd
+from sklearn.model_selection import GroupKFold
 
 
 def create_field_location(df: pd.DataFrame):
@@ -132,10 +133,10 @@ def extract_target(df: pd.DataFrame):
     return y
 
 
-def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False):
+def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False):
     '''
     Targets with NA are due to discarded plots (accordingly with Cyverse data)
-    Reference: "Genome-enabled Prediction Accuracies Increased by Modeling Genotype x Environment Interaction in Durum Wheat" (Sukumaran et. al, 2017)
+    Reference for CVs: "Genome-enabled Prediction Accuracies Increased by Modeling Genotype x Environment Interaction in Durum Wheat" (Sukumaran et. al, 2017)
     https://acsess.onlinelibrary.wiley.com/doi/10.3835/plantgenome2017.12.0112
     '''
 
@@ -157,6 +158,13 @@ def split_train_val(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = Fal
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
         train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
         val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
+
+        # k-fold
+        gkf = GroupKFold(n_splits=5)
+        for i, (_, v) in enumerate(gkf.split(X=val.drop('Yield_Mg_ha', axis=1), y=val['Yield_Mg_ha'], groups=val['Hybrid'])):
+            val.loc[v, 'fold'] = i
+        train['fold'] = 99  # only a placeholder 
+
         print('# rows train after pruning:', len(train))
         print('# rows val after pruning:', len(val))
         del train['Field_Location'], val['Field_Location']

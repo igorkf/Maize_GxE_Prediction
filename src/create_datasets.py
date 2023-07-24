@@ -8,7 +8,7 @@ from preprocessing import (
     process_metadata,
     process_test_data,
     lat_lon_to_bin,
-    split_train_val,
+    create_folds,
     agg_yield,
     process_blues,
     feat_eng_weather,
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     ec_test = pd.read_csv('data/Testing_Data/6_Testing_EC_Data_2022.csv').set_index('Env')
 
     # split train/val
-    xtrain, xval = split_train_val(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
+    xtrain, xval = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
 
     # agg yield (unadjusted means)
     xtrain = agg_yield(xtrain)
