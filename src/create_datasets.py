@@ -20,7 +20,8 @@ from preprocessing import (
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cv', type=int, choices={0, 1, 2})
+parser.add_argument('--cv', type=int, choices={0, 1, 2}, required=True)
+parser.add_argument('--fold', type=int, choices={0, 1, 2, 3, 4}, required=True)
 args = parser.parse_args()
 
 if args.cv == 0:
@@ -79,8 +80,10 @@ if __name__ == '__main__':
     ec = pd.read_csv('data/Training_Data/6_Training_EC_Data_2014_2021.csv').set_index('Env')
     ec_test = pd.read_csv('data/Testing_Data/6_Testing_EC_Data_2022.csv').set_index('Env')
 
-    # split train/val
-    xtrain, xval = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
+    # fold assignment
+    df_folds = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
+    xtrain = df_folds[df_folds['fold'] != args.fold].drop('fold', axis=1).reset_index(drop=True)
+    xval = df_folds[df_folds['fold'] == args.fold].drop('fold', axis=1).reset_index(drop=True)
 
     # agg yield (unadjusted means)
     xtrain = agg_yield(xtrain)
@@ -179,8 +182,8 @@ if __name__ == '__main__':
     print('yval nulls:', yval.isnull().sum() / len(yval))
 
     # write datasets
-    xtrain.reset_index().to_csv(OUTPUT_PATH / 'xtrain.csv', index=False)
-    xval.reset_index().to_csv(OUTPUT_PATH / 'xval.csv', index=False)
+    xtrain.reset_index().to_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv', index=False)
+    xval.reset_index().to_csv(OUTPUT_PATH / f'xval_fold{args.fold}.csv', index=False)
     xtest.reset_index().to_csv(OUTPUT_PATH / 'xtest.csv', index=False)
-    ytrain.reset_index().to_csv(OUTPUT_PATH / 'ytrain.csv', index=False)
-    yval.reset_index().to_csv(OUTPUT_PATH / 'yval.csv', index=False)
+    ytrain.reset_index().to_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}.csv', index=False)
+    yval.reset_index().to_csv(OUTPUT_PATH / f'yval_fold{args.fold}.csv', index=False)

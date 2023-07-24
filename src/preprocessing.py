@@ -206,5 +206,5 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         raise NotImplementedError(f'cv = {cv} is not implemented.')
 
     del df_folds['Field_Location']
-    df_folds['fold'] = df_folds.astype('int')
+    df_folds['fold'] = df_folds['fold'].astype('int')
     return df_folds
