@@ -152,8 +152,6 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
     if cv == 0:
         train = df[df['Year'] == val_year - 1].dropna(subset=['Yield_Mg_ha'])
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
-        print('# rows train before pruning:', len(train))
-        print('# rows val before pruning:', len(val))
         known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
         train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
@@ -162,6 +160,7 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         val = val.sample(frac=1, random_state=42).reset_index(drop=True)
 
         # k-fold
+        # TODO: check CV0
         gkf = GroupKFold(n_splits=5)
         for i, (_, v) in enumerate(gkf.split(X=val, groups=val['Hybrid'])):
             val.loc[v, 'fold'] = i

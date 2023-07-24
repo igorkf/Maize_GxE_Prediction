@@ -82,8 +82,18 @@ if __name__ == '__main__':
 
     # fold assignment
     df_folds = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
-    xtrain = df_folds[df_folds['fold'] != args.fold].drop('fold', axis=1).reset_index(drop=True)
     xval = df_folds[df_folds['fold'] == args.fold].drop('fold', axis=1).reset_index(drop=True)
+    if args.cv == 0:
+        xtrain = df_folds[df_folds['fold'] == 99].drop('fold', axis=1).reset_index(drop=True)
+        xtrain = create_field_location(xtrain)
+        xval = create_field_location(xval)
+        xtrain = xtrain[(xtrain['Hybrid'].isin(xval['Hybrid'])) & (xtrain['Field_Location'].isin(xval['Field_Location']))].reset_index(drop=True)
+        assert set(xtrain['Year']) & set(xval['Year']) == set()
+        assert set(xtrain['Field_Location']) == set(xval['Field_Location'])
+        assert set(xtrain['Hybrid']) == set(xval['Hybrid'])
+        del xtrain['Field_Location'], xval['Field_Location']
+    else:
+        xtrain = df_folds[df_folds['fold'] != args.fold].drop('fold', axis=1).reset_index(drop=True)
 
     # agg yield (unadjusted means)
     xtrain = agg_yield(xtrain)
