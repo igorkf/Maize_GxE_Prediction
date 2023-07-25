@@ -1,6 +1,10 @@
-## How to reproduce the results
+# How to reproduce the results
 
-### Download the data
+_Disclaimer: You will need a lot of space (~200GB) to run all experiments._
+
+<br><br>
+
+## Download the data
 
 Download the data [here](https://doi.org/10.25739/tq5e-ak26), extract it, and put both `Training_Data` and `Testing_Data` folders inside the `data` folder. Unzip the VCF file `Training_Data/5_Genotype_Data_All_Years.vcf.zip`.
 
@@ -53,9 +57,9 @@ cat ~/.R/Makevars
 
 </details>
 
-<br>
+<br><br>
 
-### Setup conda and R packages
+## Setup conda and R packages
 Install the conda environment:
 ```
 conda env create -f environment.yml
@@ -81,8 +85,10 @@ setRepositories(ind = 1:2)
 devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 ```
 
+<br><br>
 
-### Preprocessing
+
+## Preprocessing
 
 1. Create BLUEs:
 ```
@@ -107,7 +113,10 @@ python3 src/create_individuals.py
 ./run_kinships.sh
 ```
 
-### Run models
+<br><br>
+
+
+## Run models
 
 1. Run all CVs for E models:   
 ```
@@ -119,7 +128,7 @@ python3 src/create_individuals.py
 ./run_cv_g_models.sh
 ```
 
-3. Run all CVs for Kroneckers:
+3. Run all CVs for Kronecker products (this will generate a lot of big files):
 ```
 ./run_cv_kroneckers.sh
 ```
@@ -134,16 +143,19 @@ Run all CVs for GBLUP models:
 ./run_cv_gblup_models.sh
 ```
 
-Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later.
+_Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
 
-### If running in a cluster
+<br><br>
+
+
+## If running in a cluster
 We used SLURM to schedule the jobs. To run all the jobs do:
 ```
-JOBID1=$(sbatch --parsable run_job1.sh)
-sbatch --dependency=afterok:$JOBID1 run_job_gblupcv0.sh
-sbatch --dependency=afterok:$JOBID1 run_job_gblupcv1.sh
-sbatch --dependency=afterok:$JOBID1 run_job_gblupcv2.sh
-JOBID2=$(sbatch --dependency=afterok:$JOBID1 --parsable run_job_kroneckers.sh)
-sbatch --dependency=afterok:$JOBID2 run_job2.sh
+JOB_DATA=$(sbatch --parsable job_datasets.sh)
+sbatch --dependency=afterok:$JOB_DATA job_e.sh
+sbatch --dependency=afterok:$JOB_DATA job_g.sh
+JOB_KRON=$(sbatch --dependency=afterok:$JOB_DATA job_kroneckers.sh)
+sbatch --dependency=afterok:$JOB_KRON --parsable job_gxe.sh
+sbatch --dependency=afterok:$JOB_DATA job_gblup.sh
 ```
 

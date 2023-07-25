@@ -3,22 +3,24 @@ library(data.table)
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   cv <- 0
+  fold <- 0
   debug <- FALSE
   dataset <- "train"
   kinship_type <- "additive"
 } else {
   cv <- args[1]  # 0, 1, or 2
-  debug <- as.logical(args[2])  # FALSE or TRUE  (for debugging set to TRUE)
-  dataset <- args[3]  # "train" or "val"
-  kinship_type <- args[4]  # "additive", "dominant", "epi_AA", "epi_DD", or "epi_AD"
+  fold <- args[2]  # 0, 1, 2, 3 or 4
+  debug <- as.logical(args[3])  # FALSE or TRUE  (for debugging set to TRUE)
+  dataset <- args[4]  # "train" or "val"
+  kinship_type <- args[5]  # "additive", "dominant", "epi_AA", "epi_DD", or "epi_AD"
 }
 kinship_path <- paste0("output/kinship_", kinship_type, ".txt")
-outfile <- paste0("output/cv", cv, "/kronecker_", kinship_type, "_", dataset, ".feather")
+outfile <- paste0("output/cv", cv, "/kronecker_", kinship_type, "_", dataset, "_fold", fold, ".feather")
 cat("Debug mode:", debug, "\n")
 cat("Using", kinship_type, "matrix\n")
 cat("dataset:", dataset, "\n")
 
-x <- fread(paste0("output/cv", cv, "/x", dataset, ".csv"), data.table = F)
+x <- fread(paste0("output/cv", cv, "/x", dataset, "_fold", fold, ".csv"), data.table = F)
 x <- x[, !grepl("yield_lag", colnames(x))]  # remove all yield related features
 x$Hybrid <- NULL 
 x$Env <- substr(x$Env, 1, nchar(x$Env) - 5)
@@ -28,7 +30,7 @@ rownames(x) <- x$Env
 x$Env <- NULL
 x <- as.matrix(x)
 
-y <- fread(paste0("output/cv", cv, "/y", dataset, ".csv"), data.table = F)
+y <- fread(paste0("output/cv", cv, "/y", dataset, "_fold", fold, ".csv"), data.table = F)
 y$Env <- substr(y$Env, 1, nchar(y$Env) - 5)
 
 if (debug == FALSE) {
@@ -59,5 +61,3 @@ arrow::write_feather(
 rm(K); gc()
 cat("Writing file:", outfile, "\n\n")
 Sys.sleep(5)
-
-
