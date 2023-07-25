@@ -1,21 +1,18 @@
 import argparse
-import os
-import contextlib
 from pathlib import Path
 
 import pandas as pd
 import lightgbm as lgbm
 from sklearn.decomposition import TruncatedSVD
-import optuna
 
 from preprocessing import create_field_location
 from evaluate import create_df_eval, avg_rmse, feat_imp
-from tune import objective
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cv', type=int, choices={0, 1, 2})
-parser.add_argument('--model', choices={'G', 'GxE'})
+parser.add_argument('--cv', type=int, choices={0, 1, 2}, required=True)
+parser.add_argument('--fold', type=int, choices={0, 1, 2, 3, 4}, required=True)
+parser.add_argument('--model', choices={'G', 'GxE'}, required=True)
 parser.add_argument('--A', action='store_true', default=False)
 parser.add_argument('--D', action='store_true', default=False)
 parser.add_argument('--epiAA', action='store_true', default=False)
@@ -30,11 +27,11 @@ args = parser.parse_args()
 OUTPUT_PATH = Path(f'output/cv{args.cv}')
 
 if args.model == 'G':
-    outfile = OUTPUT_PATH / 'oof_g_model'
+    outfile = OUTPUT_PATH / f'oof_g_model_fold{args.fold}'
     print('Using G model.')
 else:
     print('Using GxE model.')
-    outfile = OUTPUT_PATH / 'oof_gxe_model'
+    outfile = OUTPUT_PATH / f'oof_gxe_model_fold{args.fold}'
 
 if args.cv == 0:
     print('Using CV0')
@@ -81,8 +78,8 @@ def prepare_train_val_gxe(kinship):
 if __name__ == '__main__':
     
     # load targets
-    ytrain = pd.read_csv(OUTPUT_PATH / 'ytrain.csv')
-    yval = pd.read_csv(OUTPUT_PATH / 'yval.csv')
+    ytrain = pd.read_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}.csv')
+    yval = pd.read_csv(OUTPUT_PATH / f'yval_fold{args.fold}.csv')
     individuals = ytrain['Hybrid'].unique().tolist() + yval['Hybrid'].unique().tolist()
     individuals = list(dict.fromkeys(individuals))  # take unique but preserves order (python 3.7+)
     print('# unique individuals:', len(individuals))
@@ -165,10 +162,12 @@ if __name__ == '__main__':
         if args.model == 'G':
             print('Using E matrix.')
             outfile = f'{outfile}_E'
-            Etrain = pd.read_csv(OUTPUT_PATH / 'xtrain.csv')
-            Eval = pd.read_csv(OUTPUT_PATH / 'xval.csv')
+            Etrain = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv')
+            Eval = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}.csv')
         else:
-            raise Exception('GxE+E is not implemented.')
+            raise Exception('G+E+GxE is not implemented.')
+        
+    print('Using fold', args.fold)
 
     if (args.model == 'G' and len(kinships) == 0) or (args.model == 'GxE' and len(kroneckers_train) == 0):
         raise Exception('Choose at least one matrix.')
@@ -206,19 +205,18 @@ if __name__ == '__main__':
     no_lags_cols = [x for x in xtrain.columns.tolist() if x not in ['Env', 'Hybrid']]
     if args.lag_features:
         outfile = f'{outfile}_lag_features'
-        xtrain_lag = pd.read_csv(OUTPUT_PATH / 'xtrain.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-        xval_lag = pd.read_csv(OUTPUT_PATH / 'xval.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+        xtrain_lag = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+        xval_lag = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
         xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
         xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
     
     if args.model == 'GxE':
         if 'Env' in xtrain.columns and 'Hybrid' in xtrain.columns:
-       	    xtrain = xtrain.set_index(['Env', 'Hybrid'])
+            xtrain = xtrain.set_index(['Env', 'Hybrid'])
             xval = xval.set_index(['Env', 'Hybrid'])
     
     # run model
     if not args.svd:
-        outfile = f'{outfile}_full'
 
         # add factor
         xtrain = xtrain.reset_index()
@@ -246,7 +244,7 @@ if __name__ == '__main__':
         print('# Features:', xtrain.shape[1])
 
         # fit
-        model = lgbm.LGBMRegressor(random_state=42)
+        model = lgbm.LGBMRegressor(random_state=42, max_depth=3)
         model.fit(xtrain, ytrain)
 
         # predict
@@ -271,7 +269,7 @@ if __name__ == '__main__':
         xtrain_svd = pd.DataFrame(svd.transform(xtrain[no_lags_cols]), columns=svd_cols, index=xtrain[no_lags_cols].index)
         xval_svd = pd.DataFrame(svd.transform(xval[no_lags_cols]), columns=svd_cols, index=xval[no_lags_cols].index)
 
-        # bind lagged yield features
+        # bind lagged yield features if needed
         if args.lag_features:
             xtrain = xtrain_svd.merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner').copy()
             del xtrain_svd, xtrain_lag
@@ -283,7 +281,6 @@ if __name__ == '__main__':
             xval = xval_svd.copy()
             del xval_svd
 
-    # tune model if using svd features
     if args.svd:
 
         # add factor
@@ -296,22 +293,8 @@ if __name__ == '__main__':
         xval['Field_Location'] = xval['Field_Location'].astype('category')
         xval = xval.set_index(['Env', 'Hybrid'])
 
-        print('Tuning.')
-
-        # silent lgbm warnings
-        with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
-            optuna.logging.set_verbosity(optuna.logging.WARNING)  # silent optuna results
-            study = optuna.create_study(direction='minimize', sampler=optuna.samplers.TPESampler(seed=42))
-            func = lambda trial: objective(trial, xtrain, ytrain, xval, yval)
-            study.optimize(func, n_trials=200)
-
-            # fit again with best parameters
-            model = lgbm.LGBMRegressor(**study.best_trial.params, random_state=42)
-            model.fit(xtrain, ytrain)
-            
-        print('# Trials:', len(study.trials))
-        print('Best trial:', study.best_trial.params)
-        print('Best RMSE:', study.best_value)
+        model = lgbm.LGBMRegressor(random_state=42, max_depth=3)
+        model.fit(xtrain, ytrain)
 
         # feature importance
         df_feat_imp = feat_imp(model)
@@ -332,4 +315,3 @@ if __name__ == '__main__':
     print('Writing file:', outfile, '\n')
     df_eval.to_csv(outfile, index=False)
     df_eval_train.to_csv(outfile.replace('oof_', 'pred_train_'), index=False)
-

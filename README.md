@@ -109,12 +109,17 @@ python3 src/create_individuals.py
 
 ### Run models
 
-Run all CVs for E models:   
+1. Run all CVs for E models:   
 ```
 ./run_cv_e_models.sh
 ```
 
-Run all CVs for Kroneckers:
+2. Run all CVs for G models:
+```
+./run_cv_g_models.sh
+```
+
+3. Run all CVs for Kroneckers:
 ```
 ./run_cv_kroneckers.sh
 ```
