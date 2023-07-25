@@ -167,41 +167,43 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         for i, (_, v) in enumerate(gkf.split(X=val, groups=val['Hybrid'])):
             val.loc[v, 'fold'] = i
         train['fold'] = 99.0  # only a placeholder 
-
         df_folds = pd.concat([train, val], axis=0, ignore_index=True)
 
     # train in known environments, predict in unknown hybrids
     elif cv == 1:
         train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
-        known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
-        train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
-        val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        train = train[(train['Hybrid'].isin(vcfed_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        val = val[(val['Hybrid'].isin(vcfed_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        train = train.sample(frac=1, random_state=42).reset_index(drop=True)
+        val = val.sample(frac=1, random_state=42).reset_index(drop=True)
 
         # k-fold
-        df_folds = pd.concat([train, val], axis=0, ignore_index=True).sample(frac=1, random_state=42).reset_index(drop=True)
         gkf = GroupKFold(n_splits=5)
-        for i, (_, v) in enumerate(gkf.split(X=df_folds, groups=df_folds['Hybrid'])):
-            df_folds.loc[v, 'fold'] = i
+        for i, (_, v) in enumerate(gkf.split(X=val, groups=val['Hybrid'])):
+            val.loc[v, 'fold'] = i
+        train['fold'] = 99.0  # only a placeholder
+        df_folds = pd.concat([train, val], axis=0, ignore_index=True)
 
     # some environment/hybrid combinations are unknown
     elif cv == 2:
         train = df[df['Year'].isin([val_year - 1, val_year])].dropna(subset=['Yield_Mg_ha'])
         val = df[df['Year'] == val_year].dropna(subset=['Yield_Mg_ha'])
-        known_hybrids = set(vcfed_hybrids) & set(train['Hybrid']) & set(val['Hybrid'])
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
-        train = train[(train['Hybrid'].isin(known_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
-        val = val[(val['Hybrid'].isin(known_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
-        train['Env_Hybrid'] = train['Env'] + ':' + train['Hybrid']
-        val['Env_Hybrid'] = val['Env'] + ':' + val['Hybrid']
+        train = train[(train['Hybrid'].isin(vcfed_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        val = val[(val['Hybrid'].isin(vcfed_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
+        train['Loc_Hybrid'] = train['Field_Location'] + ':' + train['Hybrid']
+        val['Loc_Hybrid'] = val['Field_Location'] + ':' + val['Hybrid']
+        train = train.sample(frac=1, random_state=42).reset_index(drop=True)
+        val = val.sample(frac=1, random_state=42).reset_index(drop=True)
 
         # k-fold
-        df_folds = pd.concat([train, val], axis=0, ignore_index=True).sample(frac=1, random_state=42).reset_index(drop=True)
         gkf = GroupKFold(n_splits=5)
-        for i, (_, v) in enumerate(gkf.split(X=df_folds, groups=df_folds['Env_Hybrid'])):
-            df_folds.loc[v, 'fold'] = i
-        del df_folds['Env_Hybrid']
+        for i, (_, v) in enumerate(gkf.split(X=val, groups=val['Loc_Hybrid'])):
+            val.loc[v, 'fold'] = i
+        train['fold'] = 99.0  # only a placeholder
+        df_folds = pd.concat([train, val], axis=0, ignore_index=True)
 
     else:
         raise NotImplementedError(f'cv = {cv} is not implemented.')

@@ -90,17 +90,25 @@ if __name__ == '__main__':
     random.seed(42)
     df_folds = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
     xval = df_folds[df_folds['fold'] == args.fold].drop('fold', axis=1).reset_index(drop=True)
+    xtrain = df_folds[df_folds['fold'] == 99].drop('fold', axis=1).reset_index(drop=True)
+    print('val to train ratio:', len(set(xval['Hybrid'])) / len(set(xtrain['Hybrid'])))
+
     if args.cv == 0:
-        xtrain = df_folds[df_folds['fold'] == 99].drop('fold', axis=1).reset_index(drop=True)
-        print('val to train ratio:', len(set(xval['Hybrid'])) / len(set(xtrain['Hybrid'])))
         candidates = list(set(df_folds['Hybrid']) - set(xval['Hybrid']))
         selected = random.choices(candidates, k=int(len(candidates) * 0.6))
         xtrain = xtrain[xtrain['Hybrid'].isin(selected + xval['Hybrid'].tolist())].reset_index(drop=True)
-        assert set(xtrain['Year']) & set(xval['Year']) == set()
-        assert set(xtrain['Field_Location']) == set(xval['Field_Location'])
         print('val to train ratio:', len(set(xval['Hybrid'])) / len(set(xtrain['Hybrid'])))
+        assert set(xtrain['Field_Location']) == set(xval['Field_Location'])  # known environments
+        assert set(xtrain['Year']) & set(xval['Year']) == set()  # unknown year
+    elif args.cv == 1:
+        xtrain = xtrain[~xtrain['Hybrid'].isin(xval['Hybrid'])].reset_index(drop=True)
+        assert set(xtrain['Field_Location']) == set(xval['Field_Location'])  # known environments
+        assert set(xtrain['Hybrid']) & set(xval['Hybrid']) == set()  # unknown hybrids
     else:
-        xtrain = df_folds[df_folds['fold'] != args.fold].drop('fold', axis=1).reset_index(drop=True)
+        xtrain = xtrain[~xtrain['Loc_Hybrid'].isin(xval['Loc_Hybrid'])].reset_index(drop=True)
+        assert set(xtrain['Loc_Hybrid']) & set(xval['Loc_Hybrid']) == set()  # unknown environment/hybrid combinations
+        del xtrain['Loc_Hybrid'], xval['Loc_Hybrid']
+
     del xtrain['Field_Location'], xval['Field_Location']
     del xtrain['Year'], xval['Year']
 
