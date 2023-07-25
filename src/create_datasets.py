@@ -166,15 +166,15 @@ if __name__ == '__main__':
     print('lat:', sorted(set(xtrain['weather_station_lat'].unique())))
     print('lon:', sorted(set(xtrain['weather_station_lon'].unique())))
 
-    # set index
-    xtrain = xtrain.set_index(['Env', 'Hybrid'])
-    xval = xval.set_index(['Env', 'Hybrid'])
-    xtest = xtest.set_index(['Env', 'Hybrid'])
-
     # remove NA phenotype if needed
     xtrain = xtrain[~xtrain['Yield_Mg_ha'].isnull()].reset_index(drop=True)
     xval = xval[~xval['Yield_Mg_ha'].isnull()].reset_index(drop=True)
     xtest = xtest[~xtest['Yield_Mg_ha'].isnull()].reset_index(drop=True)
+
+    # set index
+    xtrain = xtrain.set_index(['Env', 'Hybrid'])
+    xval = xval.set_index(['Env', 'Hybrid'])
+    xtest = xtest.set_index(['Env', 'Hybrid'])
 
     # extract targets
     ytrain = extract_target(xtrain)
@@ -199,6 +199,9 @@ if __name__ == '__main__':
     print('yval shape:', yval.shape)
     print('ytrain nulls:', ytrain.isnull().sum() / len(ytrain))
     print('yval nulls:', yval.isnull().sum() / len(yval))
+
+    assert xtrain.index.names == ['Env', 'Hybrid']
+    assert xval.index.names == ['Env', 'Hybrid']
 
     # write datasets
     xtrain.reset_index().to_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv', index=False)
