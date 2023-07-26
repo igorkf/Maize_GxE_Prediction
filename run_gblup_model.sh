@@ -1,7 +1,8 @@
 cv=$1
-debug=$2
-invert=$3
+fold=$2
+debug=FALSE
+invert=FALSE
 
-# Rscript src/gblup.R $cv $debug $invert > "logs/gblup_cv${cv}.txt" &&
-Rscript src/gblup_bglr.R $cv > "logs/gblup_bglr_cv${cv}.txt" &&
+Rscript src/gblup.R $cv $fold $debug $invert > "logs/gblup_cv${cv}_fold${fold}.txt" &&
+# Rscript src/gblup_bglr.R $cv > "logs/gblup_bglr_cv${cv}.txt" &&
 echo "[GBLUP] model ok"

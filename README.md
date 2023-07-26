@@ -1,6 +1,6 @@
 # How to reproduce the results
 
-_Disclaimer: You will need a lot of space (~200GB) to run all experiments._
+_Disclaimer: You will need a lot of space (~1TB) to run all experiments._
 
 <br><br>
 
@@ -133,7 +133,7 @@ python3 src/create_individuals.py
 ./run_cv_kroneckers.sh
 ```
 
-Run all CVs for GxE models:   
+4. Run all CVs for GxE models:   
 ```
 ./run_cv_gxe_models.sh
 ```
@@ -158,4 +158,3 @@ JOB_KRON=$(sbatch --dependency=afterok:$JOB_DATA job_kroneckers.sh)
 sbatch --dependency=afterok:$JOB_KRON --parsable job_gxe.sh
 sbatch --dependency=afterok:$JOB_DATA job_gblup.sh
 ```
-
