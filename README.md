@@ -78,7 +78,8 @@ install.packages("arrow")
 install.packages("data.table")
 install.packages("AGHmatrix")
 install.packages("devtools")
-install.packages("asreml")  # for blues and gblup
+install.packages("asreml")  # for BLUEs
+install.packages("BGLR)  # for GBLUP
 
 # from github source
 setRepositories(ind = 1:2)
@@ -138,9 +139,9 @@ python3 src/create_individuals.py
 ./run_cv_gxe_models.sh
 ```
 
-Run all CVs for GBLUP models:
+5. Run all CVs for GBLUP models:
 ```
-./run_cv_gblup_models.sh
+./run_cv_gblup_bglr_models.sh
 ```
 
 _Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
@@ -156,5 +157,5 @@ sbatch --dependency=afterok:$JOB_DATA job_e.sh
 sbatch --dependency=afterok:$JOB_DATA job_g.sh
 JOB_KRON=$(sbatch --dependency=afterok:$JOB_DATA job_kroneckers.sh)
 sbatch --dependency=afterok:$JOB_KRON --parsable job_gxe.sh
-sbatch --dependency=afterok:$JOB_DATA job_gblup.sh
+sbatch --dependency=afterok:$JOB_DATA job_gblups_bglr.sh
 ```
