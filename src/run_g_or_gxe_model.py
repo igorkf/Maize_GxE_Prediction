@@ -33,46 +33,27 @@ else:
     print('Using GxE model.')
     outfile = OUTPUT_PATH / f'oof_gxe_model_fold{args.fold}'
 
-if args.cv == 0:
-    print('Using CV0')
-    YTRAIN_YEAR = 2020
-    YVAL_YEAR = 2021
-    YTEST_YEAR = 2022
-elif args.cv == 1:
-    print('Using CV1')
-    YTRAIN_YEAR = 2021  # for split it uses 2020 and 2021
-    YVAL_YEAR = 2021
-    YTEST_YEAR = 2022
-elif args.cv == 2:
-    print('Using CV2')
-    YTRAIN_YEAR = 2021  # for split it uses 2020 and 2021
-    YVAL_YEAR = 2021
-    YTEST_YEAR = 2022
-
 
 def preprocess_g(df, kinship, individuals: list):
     df.columns = [x[:len(x) // 2] for x in df.columns]  # fix duplicated column names
     df.index = df.columns
-    df = df.loc[individuals, individuals].copy()  # keep only know individuals
+    df = df.loc[individuals, individuals].copy()
     df.index.name = 'Hybrid'
     df.columns = [f'{x}_{kinship}' for x in df.columns]
     return df
 
 
-def preprocess_gxe(df, year, kinship):
+def preprocess_kron(df, kinship):
     df[['Env', 'Hybrid']] = df['id'].str.split(':', expand=True)
-    df['Env'] += f'_{year}'
     df = df.drop('id', axis=1).set_index(['Env', 'Hybrid'])
     df.columns = [f'{x}_{kinship}' for x in df.columns]
     return df
 
 
-def prepare_train_val_gxe(kinship):
-    xtrain = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}_train.feather')
-    xtrain = preprocess_gxe(xtrain, year=YTRAIN_YEAR, kinship=kinship)
-    xval = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}_val.feather')
-    xval = preprocess_gxe(xval, year=YVAL_YEAR, kinship=kinship)
-    return xtrain, xval
+def prepare_gxe(kinship):
+    kron = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}_fold{args.fold}.feather')
+    kron = preprocess_kron(kron, kinship=kinship)
+    return kron
 
 
 if __name__ == '__main__':
@@ -86,8 +67,7 @@ if __name__ == '__main__':
 
     # load kinships or kroneckers
     kinships = []
-    kroneckers_train = []
-    kroneckers_val = []
+    kroneckers = []
     if args.A:
         print('Using A matrix.')
         outfile = f'{outfile}_A'
@@ -96,11 +76,7 @@ if __name__ == '__main__':
             A = preprocess_g(A, 'A', individuals)
             kinships.append(A)
         else:
-            xtrain, xval = prepare_train_val_gxe('additive')
-            kroneckers_train.append(xtrain)
-            del xtrain
-            kroneckers_val.append(xval)
-            del xval
+            kroneckers.append(prepare_gxe('additive'))
 
     if args.D:
         print('Using D matrix.')
@@ -110,11 +86,7 @@ if __name__ == '__main__':
             D = preprocess_g(D, 'D', individuals)
             kinships.append(D)
         else:
-            xtrain, xval = prepare_train_val_gxe('dominant')
-            kroneckers_train.append(xtrain)
-            del xtrain
-            kroneckers_val.append(xval)
-            del xval
+            kroneckers.append(prepare_gxe('dominant'))
 
     if args.epiAA:
         print('Using epiAA matrix.')
@@ -124,11 +96,7 @@ if __name__ == '__main__':
             epiAA = preprocess_g(epiAA, 'epi_AA', individuals)
             kinships.append(epiAA)
         else:
-            xtrain, xval = prepare_train_val_gxe('epi_AA')
-            kroneckers_train.append(xtrain)
-            del xtrain
-            kroneckers_val.append(xval)
-            del xval
+            kroneckers.append(prepare_gxe('epi_AA'))
 
     if args.epiDD:
         print('Using epiDD matrix.')
@@ -138,11 +106,7 @@ if __name__ == '__main__':
             epiDD = preprocess_g(epiDD, 'epi_DD', individuals)
             kinships.append(epiDD)
         else:
-            xtrain, xval = prepare_train_val_gxe('epi_DD')
-            kroneckers_train.append(xtrain)
-            del xtrain
-            kroneckers_val.append(xval)
-            del xval
+            kroneckers.append(prepare_gxe('epi_DD'))
 
     if args.epiAD:
         print('Using epiAD matrix.')
@@ -152,11 +116,7 @@ if __name__ == '__main__':
             epiAD = preprocess_g(epiAD, 'epi_AD', individuals)
             kinships.append(epiAD)
         else:
-            xtrain, xval = prepare_train_val_gxe('epi_AD')
-            kroneckers_train.append(xtrain)
-            del xtrain
-            kroneckers_val.append(xval)
-            del xval
+            kroneckers.append(prepare_gxe('epi_AD'))
 
     if args.E:
         if args.model == 'G':
@@ -169,7 +129,7 @@ if __name__ == '__main__':
         
     print('Using fold', args.fold)
 
-    if (args.model == 'G' and len(kinships) == 0) or (args.model == 'GxE' and len(kroneckers_train) == 0):
+    if (args.model == 'G' and len(kinships) == 0) or (args.model == 'GxE' and len(kroneckers) == 0):
         raise Exception('Choose at least one matrix.')
     
     # concat dataframes and bind target
@@ -179,12 +139,10 @@ if __name__ == '__main__':
         xval = pd.merge(yval, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
         del kinships
     else:
-        xtrain = pd.concat(kroneckers_train, axis=1)
-        xtrain = xtrain.merge(ytrain, on=['Env', 'Hybrid'], how='inner')
-        del kroneckers_train
-        xval = pd.concat(kroneckers_val, axis=1)
-        xval = xval.merge(yval, on=['Env', 'Hybrid'], how='inner')
-        del kroneckers_val
+        kron = pd.concat(kroneckers, axis=1)
+        xtrain = pd.merge(ytrain, kron, on=['Env', 'Hybrid'], how='inner')
+        xval = pd.merge(yval, kron, on=['Env', 'Hybrid'], how='inner')
+        del kron, kroneckers
 
     # split x, y
     ytrain = xtrain['Yield_Mg_ha']
@@ -214,7 +172,7 @@ if __name__ == '__main__':
         if 'Env' in xtrain.columns and 'Hybrid' in xtrain.columns:
             xtrain = xtrain.set_index(['Env', 'Hybrid'])
             xval = xval.set_index(['Env', 'Hybrid'])
-    
+
     # run model
     if not args.svd:
 
@@ -227,9 +185,6 @@ if __name__ == '__main__':
         xval = create_field_location(xval)
         xval['Field_Location'] = xval['Field_Location'].astype('category')
         xval = xval.set_index(['Env', 'Hybrid'])
-
-        # make sure all columns are the same
-        xval = xval[xtrain.columns]
 
         # include E matrix if requested
         if args.E:
@@ -296,11 +251,6 @@ if __name__ == '__main__':
         model = lgbm.LGBMRegressor(random_state=42, max_depth=3)
         model.fit(xtrain, ytrain)
 
-        # feature importance
-        df_feat_imp = feat_imp(model)
-        feat_imp_outfile = f'{outfile.replace("oof", "feat_imp")}.csv'
-        df_feat_imp.to_csv(feat_imp_outfile, index=False)
-
         # predict
         ypred_train = model.predict(xtrain)
         ypred = model.predict(xval)
@@ -309,6 +259,11 @@ if __name__ == '__main__':
         df_eval_train = create_df_eval(xtrain, ytrain, ypred_train)
         df_eval = create_df_eval(xval, yval, ypred)
         _ = avg_rmse(df_eval)
+
+        # feature importance
+        df_feat_imp = feat_imp(model)
+        feat_imp_outfile = f'{outfile.replace("oof", "feat_imp")}.csv'
+        df_feat_imp.to_csv(feat_imp_outfile, index=False)
 
     # write OOF results
     outfile = f'{outfile}.csv'
