@@ -100,8 +100,8 @@ fit_model <- function() {
     y = as.matrix(ytrain_wider[, -1]),  # Phenotypic data
     ETA = ETA,
     resCov = resCov,  # default is UN (unstructured)
-    nIter = 2000,       # Number of iterations for the model
-    burnIn = 300,       # Burnin iterations
+    nIter = 5000,       # Number of iterations for the model
+    burnIn = 500,       # Burnin iterations
     thin = 5,           # Sampling throughout iterations
     saveAt = paste0('output/cv', cv, '/BGLR/GBLUP_FA_fold', fold, '_'),
     verbose = T
@@ -173,4 +173,3 @@ fwrite(pred_longer, paste0('output/cv', cv, '/oof_gblup_bglr_model_fold', fold, 
 # compare with asreml model predictions
 # asr <- read.csv(paste0('output/cv', cv, '/oof_gblup_env_hybrid_model.csv'))
 # cat('Correlation between asreml and BGLR predictions:\n', cor(asr$ypred, pred_env_hybrid$ypred), '\n')
-
