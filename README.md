@@ -82,7 +82,13 @@ JOB_KRON=$(sbatch --dependency=afterok:$JOB_GENOMICS --parsable 4-job_kroneckers
 <br><br>
 
 
-## Run models
+## Models
+5. Fit E models:
+```
+for i in {1..10}; do sbatch --export=seed=${i} --job-name=e_seed${i} --output=logs/job_e_seed${i}.txt 5-job_e.sh; done
+```
+
+
 
 1. Run all CVs for E models:   
 ```

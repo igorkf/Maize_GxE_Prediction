@@ -11,6 +11,7 @@ from evaluate import create_df_eval, avg_rmse, feat_imp
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, choices={0, 1, 2}, required=True)
 parser.add_argument('--fold', type=int, choices={0, 1, 2, 3, 4}, required=True)
+parser.add_argument('--seed', type=int, required=True)
 args = parser.parse_args()
 
 OUTPUT_PATH = Path(f'output/cv{args.cv}')
@@ -23,11 +24,11 @@ META_TEST_PATH = 'data/Testing_Data/2_Testing_Meta_Data_2022.csv'
 if __name__ == '__main__':
     # df_sub = process_test_data(TEST_PATH).reset_index()[['Env', 'Hybrid']]
 
-    xtrain = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv')
-    xval = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}.csv')
+    xtrain = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}_seed{args.seed}.csv')
+    xval = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}_seed{args.seed}.csv')
     # xtest = pd.read_csv(OUTPUT_PATH / 'xtest.csv')
-    ytrain = pd.read_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
-    yval = pd.read_csv(OUTPUT_PATH / f'yval_fold{args.fold}.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
+    ytrain = pd.read_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}_seed{args.seed}.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
+    yval = pd.read_csv(OUTPUT_PATH / f'yval_fold{args.fold}_seed{args.seed}.csv').set_index(['Env', 'Hybrid'])['Yield_Mg_ha']
 
     # add factor
     xtrain = create_field_location(xtrain)
@@ -43,12 +44,12 @@ if __name__ == '__main__':
     # xtest = xtest.set_index(['Env', 'Hybrid'])
 
     # fit
-    model = lgbm.LGBMRegressor(random_state=42, max_depth=3)
+    model = lgbm.LGBMRegressor(random_state=args.seed, max_depth=3)
     model.fit(xtrain, ytrain)
 
     # feature importance
     df_feat_imp = feat_imp(model)
-    df_feat_imp.to_csv(OUTPUT_PATH / f'feat_imp_e_model_fold{args.fold}.csv', index=False)
+    df_feat_imp.to_csv(OUTPUT_PATH / f'feat_imp_e_model_fold{args.fold}_seed{args.seed}.csv', index=False)
 
     # predict
     ypred_train = model.predict(xtrain)
@@ -60,10 +61,10 @@ if __name__ == '__main__':
     _ = avg_rmse(df_eval)
 
     # write
-    outfile = OUTPUT_PATH / f'oof_e_model_fold{args.fold}.csv'
+    outfile = OUTPUT_PATH / f'oof_e_model_fold{args.fold}_seed{args.seed}.csv'
     print('Writing:', outfile, '\n')
     df_eval.to_csv(outfile, index=False)
-    df_eval_train.to_csv(OUTPUT_PATH / f'pred_train_e_model_fold{args.fold}.csv')
+    df_eval_train.to_csv(OUTPUT_PATH / f'pred_train_e_model_fold{args.fold}_seed{args.seed}.csv')
 
     # predict on test
     # df_sub['Yield_Mg_ha'] = model.predict(xtest)
