@@ -12,6 +12,7 @@ from evaluate import create_df_eval, avg_rmse, feat_imp
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, choices={0, 1, 2}, required=True)
 parser.add_argument('--fold', type=int, choices={0, 1, 2, 3, 4}, required=True)
+parser.add_argument('--seed', type=int, required=True)
 parser.add_argument('--model', choices={'G', 'GxE'}, required=True)
 parser.add_argument('--A', action='store_true', default=False)
 parser.add_argument('--D', action='store_true', default=False)
@@ -27,17 +28,18 @@ args = parser.parse_args()
 OUTPUT_PATH = Path(f'output/cv{args.cv}')
 
 if args.model == 'G':
-    outfile = OUTPUT_PATH / f'oof_g_model_fold{args.fold}'
+    outfile = OUTPUT_PATH / f'oof_g_model_fold{args.fold}_seed{args.seed}'
     print('Using G model.')
 else:
     print('Using GxE model.')
-    outfile = OUTPUT_PATH / f'oof_gxe_model_fold{args.fold}'
+    outfile = OUTPUT_PATH / f'oof_gxe_model_fold{args.fold}_seed{args.seed}'
 
 
 def preprocess_g(df, kinship, individuals: list):
     df.columns = [x[:len(x) // 2] for x in df.columns]  # fix duplicated column names
     df.index = df.columns
-    df = df.loc[individuals, individuals].copy()
+    df = df[df.index.isin(individuals)]  # filter rows
+    df = df[[col for col in df.columns if col in individuals]]  # filter columns
     df.index.name = 'Hybrid'
     df.columns = [f'{x}_{kinship}' for x in df.columns]
     return df
@@ -51,7 +53,7 @@ def preprocess_kron(df, kinship):
 
 
 def prepare_gxe(kinship):
-    kron = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}_fold{args.fold}.feather')
+    kron = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}.feather')
     kron = preprocess_kron(kron, kinship=kinship)
     return kron
 
@@ -59,8 +61,8 @@ def prepare_gxe(kinship):
 if __name__ == '__main__':
     
     # load targets
-    ytrain = pd.read_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}.csv')
-    yval = pd.read_csv(OUTPUT_PATH / f'yval_fold{args.fold}.csv')
+    ytrain = pd.read_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}_seed{args.seed}.csv')
+    yval = pd.read_csv(OUTPUT_PATH / f'yval_fold{args.fold}_seed{args.seed}.csv')
     individuals = ytrain['Hybrid'].unique().tolist() + yval['Hybrid'].unique().tolist()
     individuals = list(dict.fromkeys(individuals))  # take unique but preserves order (python 3.7+)
     print('# unique individuals:', len(individuals))
@@ -122,8 +124,8 @@ if __name__ == '__main__':
         if args.model == 'G':
             print('Using E matrix.')
             outfile = f'{outfile}_E'
-            Etrain = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv')
-            Eval = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}.csv')
+            Etrain = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}_seed{args.seed}.csv')
+            Eval = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}_seed{args.seed}.csv')
         else:
             raise Exception('G+E+GxE is not implemented.')
         
@@ -163,8 +165,8 @@ if __name__ == '__main__':
     no_lags_cols = [x for x in xtrain.columns.tolist() if x not in ['Env', 'Hybrid']]
     if args.lag_features:
         outfile = f'{outfile}_lag_features'
-        xtrain_lag = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-        xval_lag = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+        xtrain_lag = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}_seed{args.seed}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
+        xval_lag = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}_seed{args.seed}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
         xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
         xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
     
@@ -199,7 +201,7 @@ if __name__ == '__main__':
         print('# Features:', xtrain.shape[1])
 
         # fit
-        model = lgbm.LGBMRegressor(random_state=42, max_depth=3)
+        model = lgbm.LGBMRegressor(random_state=args.seed, max_depth=3)
         model.fit(xtrain, ytrain)
 
         # predict
@@ -248,7 +250,7 @@ if __name__ == '__main__':
         xval['Field_Location'] = xval['Field_Location'].astype('category')
         xval = xval.set_index(['Env', 'Hybrid'])
 
-        model = lgbm.LGBMRegressor(random_state=42, max_depth=3)
+        model = lgbm.LGBMRegressor(random_state=args.seed, max_depth=3)
         model.fit(xtrain, ytrain)
 
         # predict
