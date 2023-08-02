@@ -5,7 +5,7 @@
 #SBATCH --partition=himem06
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=8
-#SBATCH --time=02:00:00
+#SBATCH --time=06:00:00
 
 ## configs 
 module purge

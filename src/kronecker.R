@@ -11,7 +11,7 @@ if (length(args) == 0) {
   kinship_type <- args[3]  # "additive", "dominant", "epi_AA", "epi_DD", or "epi_AD"
 }
 kinship_path <- paste0("output/kinship_", kinship_type, ".txt")
-outfile <- paste0("output/cv", cv, "/kronecker_", kinship_type, ".feather")
+outfile <- paste0("output/cv", cv, "/kronecker_", kinship_type, ".arrow")
 cat("Debug mode:", debug, "\n")
 cat("Using", kinship_type, "matrix\n")
 
@@ -30,7 +30,7 @@ x <- rbind(xtrain, xval)
 rm(xtrain); rm(xval); gc()
 x <- x[, !grepl("yield_lag", colnames(x))]  # remove all yield related features
 x$Hybrid <- NULL
-x <- aggregate(x, by = list(x$Env), FUN = mean)  # take mean within envs
+x <- aggregate(x[, -1], by = list(x$Env), FUN = mean)  # take mean within envs
 rownames(x) <- x$Group.1
 x$Group.1 <- NULL
 x$Env <- NULL
@@ -42,14 +42,15 @@ for (file in list.files('output/cv0', pattern = 'ytrain_fold*')) {
   ytrain <- rbind(ytrain, fread(paste0('output/cv', cv, '/', file), data.table = F))
 }
 yval <- data.frame()
-for (file in list.files('output/cv0', pattern = 'ytrain_fold*')) {
+for (file in list.files('output/cv0', pattern = 'yval_fold*')) {
   yval <- rbind(yval, fread(paste0('output/cv', cv, '/', file), data.table = F))
 }
 
-# get uniques
-envs <- unique(rbind(ytrain, yval)$Env)
-hybrids <- unique(rbind(ytrain, yval)$Hybrid)
-rm(ytrain); rm(yval); gc()
+# get unique combinations
+y <- rbind(ytrain, yval)
+hybrids <- unique(y$Hybrid)
+env_hybrid <- unique(interaction(y$Env, y$Hybrid, sep = ':', drop = T))
+rm(y); rm(ytrain); rm(yval); gc()
 
 # load kinship
 if (debug == FALSE) {
@@ -68,14 +69,13 @@ rm(x); rm(kinship); gc()
 cat("K dim:", dim(K), "\n")
 
 # some Env:Hybrid combinations were not phenotyped
-K <- K[rownames(K) %in% paste0(envs, ":", hybrids), ]
+K <- K[rownames(K) %in% env_hybrid, ]
 cat("K dim:", dim(K), "\n")
 
 # write to feather for fast reading
 arrow::write_feather(
   data.frame(id = rownames(K), K), 
-  outfile,
-  chunk_size = 1000
+  outfile
 )
 rm(K); gc()
 cat("Writing file:", outfile, "\n\n")
