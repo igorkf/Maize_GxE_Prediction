@@ -1,11 +1,11 @@
 name: maize_gxe_prediction
 channels:
   - anaconda
-  - nvidia
-  - pytorch
   - conda-forge
   - bioconda
   - defaults
+  - nvidia
+  - pytorch
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
@@ -14,8 +14,8 @@ dependencies:
   - brotli=1.0.9=h166bdaf_8
   - brotli-bin=1.0.9=h166bdaf_8
   - bzip2=1.0.8=h7f98852_4
-  - ca-certificates=2023.01.10=h06a4308_0
-  - certifi=2022.12.7=py38h06a4308_0
+  - ca-certificates=2023.7.22=hbcca054_0
+  - certifi=2023.7.22=pyhd8ed1ab_0
   - charset-normalizer=3.1.0=pyhd8ed1ab_0
   - comm=0.1.2=py38h06a4308_0
   - cycler=0.11.0=pyhd8ed1ab_0

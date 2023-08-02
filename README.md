@@ -17,45 +17,12 @@ The folder structure should look as follows:
 ├── logs/
 ├── output/
 │   ├── cv0/
+|   |   └── BGLR/
 │   ├── cv1/
-│   └── cv2/
+|   |   └── BGLR/
+├── |── cv2/
+|   |   └── BGLR/
 ```
-
-We runned the models in a cluster, so you can skip the next hidden block: 
-<details>
-<summary>Click to expand</summary>
-
-```
-module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools/0.1.15 plink/5.2
-module load python/anaconda-3.10
-source /share/apps/bin/conda-3.10.sh
-conda deactivate  # if base conda is activated
-conda activate maize_gxe_prediction
-
-# create .Rprofile
-cat ~/.Rprofile
-# options(repos = c(CRAN = "https://mirrors.nics.utk.edu/cran"))
-
-# create .Renviron
-cat ~/.Renviron 
-# R_LIBS_USER=~/R/%p/%v
-
-# create R folders
-cd
-mkdir -p R
-mkdir -p R/x86_64-pc-linux-gnu
-mkdir -p R/x86_64-pc-linux-gnu/4.2
-
-# set cpp 17 variables
-mkdir -p ~/.R
-cat ~/.R/Makevars
-# echo "CC = $(which gcc) -fPIC"
-# echo "CXX17 = $(which g++) -fPIC"
-# echo "CXX17STD = -std=c++17"
-# echo "CXX17FLAGS = ${CXX11FLAGS}"
-```
-
-</details>
 
 <br><br>
 
@@ -93,26 +60,19 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 
 1. Create BLUEs:
 ```
-Rscript src/blues.R
+JOB_BLUES=$(sbatch --parsable 1-job_blues.sh)
 ```
 
-2. Create all datasets:
+2. Create datasets for cross-validation schemes:
 ```
-./run_cv_datasets.sh
-```
-
-3. Create a list of individuals to be used:
-```
-python3 src/create_individuals.py
+JOB_DATASETS=$(sbatch --dependency=afterok:$JOB_BLUES --parsable 2-job_datasets.sh)
 ```
 
-4. Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
+3. Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
 ```
-./run_vcf_filtering.sh
+JOB_GENOMICS=$(sbatch --dependency=afterok:$JOB_DATASETS --parsable 3-job_genomics.sh)
 ```
-```
-./run_kinships.sh
-```
+
 
 <br><br>
 
@@ -150,7 +110,47 @@ _Some files in `output` will be big, particularly the Kronecker files, so you mi
 
 
 ## If running in a cluster
-We used SLURM to schedule the jobs. To run all the jobs do:
+
+Configure the cluster: 
+<details>
+<summary>Click to expand</summary>
+
+```
+module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools/0.1.15 plink/5.2
+module load python/anaconda-3.10
+source /share/apps/bin/conda-3.10.sh
+conda deactivate  # if base conda is activated
+conda activate maize_gxe_prediction
+
+# create .Rprofile
+cat ~/.Rprofile
+# options(repos = c(CRAN = "https://mirrors.nics.utk.edu/cran"))
+
+# create .Renviron
+cat ~/.Renviron 
+# R_LIBS_USER=~/R/%p/%v
+
+# create R folders
+cd
+mkdir -p R
+mkdir -p R/x86_64-pc-linux-gnu
+mkdir -p R/x86_64-pc-linux-gnu/4.2
+
+# set cpp 17 variables
+mkdir -p ~/.R
+cat ~/.R/Makevars
+# echo "CC = $(which gcc) -fPIC"
+# echo "CXX17 = $(which g++) -fPIC"
+# echo "CXX17STD = -std=c++17"
+# echo "CXX17FLAGS = ${CXX11FLAGS}"
+```
+
+</details>
+
+<br>
+
+
+Use Slurm scripts to schedule all the jobs:
 ```
 JOB_DATA=$(sbatch --parsable job_datasets.sh)
 sbatch --dependency=afterok:$JOB_DATA job_e.sh
