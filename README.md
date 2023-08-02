@@ -73,6 +73,11 @@ JOB_DATASETS=$(sbatch --dependency=afterok:$JOB_BLUES --parsable 2-job_datasets.
 JOB_GENOMICS=$(sbatch --dependency=afterok:$JOB_DATASETS --parsable 3-job_genomics.sh)
 ```
 
+4. Create Kronecker products between environmental and genomic matrices:
+```
+JOB_KRON=$(sbatch --dependency=afterok:$JOB_GENOMICS --parsable 4-job_kroneckers.sh)
+```
+
 
 <br><br>
 
