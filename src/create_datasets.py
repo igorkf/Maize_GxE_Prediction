@@ -23,6 +23,7 @@ from preprocessing import (
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, choices={0, 1, 2}, required=True)
 parser.add_argument('--fold', type=int, choices={0, 1, 2, 3, 4}, required=True)
+parser.add_argument('--seed', type=int, required=True)
 args = parser.parse_args()
 
 if args.cv == 0:
@@ -87,8 +88,8 @@ if __name__ == '__main__':
     ec_test = pd.read_csv('data/Testing_Data/6_Testing_EC_Data_2022.csv').set_index('Env')
 
     # fold assignment
-    random.seed(42)
-    df_folds = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False)
+    random.seed(args.seed)
+    df_folds = create_folds(trait, val_year=YVAL_YEAR, cv=args.cv, fillna=False, random_state=args.seed)
     xval = df_folds[df_folds['fold'] == args.fold].drop('fold', axis=1).reset_index(drop=True)
     xtrain = df_folds[df_folds['fold'] == 99].drop('fold', axis=1).reset_index(drop=True)
     print('val to train ratio:', len(set(xval['Hybrid'])) / len(set(xtrain['Hybrid'])))
@@ -137,7 +138,7 @@ if __name__ == '__main__':
     xtest_ec = ec_test[ec_test.index.isin(xtest['Env'])].copy()
 
     n_components = 15
-    svd = TruncatedSVD(n_components=n_components, n_iter=20, random_state=42)
+    svd = TruncatedSVD(n_components=n_components, n_iter=20, random_state=args.seed)
     svd.fit(xtrain_ec)
     print('SVD explained variance:', svd.explained_variance_ratio_.sum())
 
@@ -212,8 +213,8 @@ if __name__ == '__main__':
     assert xval.index.names == ['Env', 'Hybrid']
 
     # write datasets
-    xtrain.reset_index().to_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}.csv', index=False)
-    xval.reset_index().to_csv(OUTPUT_PATH / f'xval_fold{args.fold}.csv', index=False)
-    xtest.reset_index().to_csv(OUTPUT_PATH / 'xtest.csv', index=False)
-    ytrain.reset_index().to_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}.csv', index=False)
-    yval.reset_index().to_csv(OUTPUT_PATH / f'yval_fold{args.fold}.csv', index=False)
+    xtrain.reset_index().to_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}_seed{args.seed}.csv', index=False)
+    xval.reset_index().to_csv(OUTPUT_PATH / f'xval_fold{args.fold}_seed{args.seed}.csv', index=False)
+    # xtest.reset_index().to_csv(OUTPUT_PATH / 'xtest.csv', index=False)
+    ytrain.reset_index().to_csv(OUTPUT_PATH / f'ytrain_fold{args.fold}_seed{args.seed}.csv', index=False)
+    yval.reset_index().to_csv(OUTPUT_PATH / f'yval_fold{args.fold}_seed{args.seed}.csv', index=False)

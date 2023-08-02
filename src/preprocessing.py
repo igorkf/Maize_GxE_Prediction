@@ -136,7 +136,7 @@ def extract_target(df: pd.DataFrame):
     return y
 
 
-def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False):
+def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool, random_state: int):
     '''
     Targets with NA are due to discarded plots (accordingly with Cyverse data)
     Reference for CVs: "Genome-enabled Prediction Accuracies Increased by Modeling Genotype x Environment Interaction in Durum Wheat" (Sukumaran et. al, 2017)
@@ -159,8 +159,8 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         known_locations.remove('NYS1')
         train = train[(train['Hybrid'].isin(vcfed_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
         val = val[(val['Hybrid'].isin(vcfed_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
-        train = train.sample(frac=1, random_state=42).reset_index(drop=True)
-        val = val.sample(frac=1, random_state=42).reset_index(drop=True)
+        train = train.sample(frac=1, random_state=random_state).reset_index(drop=True)
+        val = val.sample(frac=1, random_state=random_state).reset_index(drop=True)
 
         # k-fold
         gkf = GroupKFold(n_splits=5)
@@ -176,8 +176,8 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         known_locations = set(train['Field_Location']) & set(val['Field_Location'])
         train = train[(train['Hybrid'].isin(vcfed_hybrids)) & (train['Field_Location'].isin(known_locations))].reset_index(drop=True)
         val = val[(val['Hybrid'].isin(vcfed_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
-        train = train.sample(frac=1, random_state=42).reset_index(drop=True)
-        val = val.sample(frac=1, random_state=42).reset_index(drop=True)
+        train = train.sample(frac=1, random_state=random_state).reset_index(drop=True)
+        val = val.sample(frac=1, random_state=random_state).reset_index(drop=True)
 
         # k-fold
         gkf = GroupKFold(n_splits=5)
@@ -195,8 +195,8 @@ def create_folds(df: pd.DataFrame, val_year: int, cv: int, fillna: bool = False)
         val = val[(val['Hybrid'].isin(vcfed_hybrids)) & (val['Field_Location'].isin(known_locations))].reset_index(drop=True)
         train['Loc_Hybrid'] = train['Field_Location'] + ':' + train['Hybrid']
         val['Loc_Hybrid'] = val['Field_Location'] + ':' + val['Hybrid']
-        train = train.sample(frac=1, random_state=42).reset_index(drop=True)
-        val = val.sample(frac=1, random_state=42).reset_index(drop=True)
+        train = train.sample(frac=1, random_state=random_state).reset_index(drop=True)
+        val = val.sample(frac=1, random_state=random_state).reset_index(drop=True)
 
         # k-fold
         gkf = GroupKFold(n_splits=5)
