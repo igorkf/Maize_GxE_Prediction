@@ -1,3 +1,4 @@
+import gc
 import argparse
 from pathlib import Path
 
@@ -143,18 +144,21 @@ if __name__ == '__main__':
         xtrain = pd.merge(ytrain, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
         xval = pd.merge(yval, K, on='Hybrid', how='left').dropna().set_index(['Env', 'Hybrid'])
         del kinships
+        gc.collect()
     else:
         kron = pd.concat(kroneckers, axis=1)
         del kroneckers
         xtrain = pd.merge(ytrain, kron, on=['Env', 'Hybrid'], how='inner')
         xval = pd.merge(yval, kron, on=['Env', 'Hybrid'], how='inner')
         del kron
+        gc.collect()
 
     # split x, y
     ytrain = xtrain['Yield_Mg_ha']
     del xtrain['Yield_Mg_ha']
     yval = xval['Yield_Mg_ha']
     del xval['Yield_Mg_ha']
+    gc.collect()
 
     # include E matrix if requested
     if args.E:
@@ -201,6 +205,7 @@ if __name__ == '__main__':
             xtrain = xtrain.merge(Etrain, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
             xval = xval.merge(Eval, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
             del Etrain, Eval
+            gc.collect()
 
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
@@ -231,6 +236,7 @@ if __name__ == '__main__':
         xtrain_svd = pd.DataFrame(svd.transform(xtrain[no_lags_cols]), columns=svd_cols, index=xtrain[no_lags_cols].index)
         xval_svd = pd.DataFrame(svd.transform(xval[no_lags_cols]), columns=svd_cols, index=xval[no_lags_cols].index)
         del svd
+        gc.collect()
 
         # bind lagged yield features if needed
         if args.lag_features:
@@ -238,11 +244,13 @@ if __name__ == '__main__':
             del xtrain_svd, xtrain_lag
             xval = xval_svd.merge(xval_lag, on=['Env', 'Hybrid'], how='inner').copy()
             del xval_svd, xval_lag
+            gc.collect()
         else:
             xtrain = xtrain_svd.copy()
             del xtrain_svd
             xval = xval_svd.copy()
             del xval_svd
+            gc.collect()
 
     if args.svd:
 

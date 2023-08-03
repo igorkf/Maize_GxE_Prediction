@@ -2,7 +2,7 @@
 
 #SBATCH --partition=himem72
 #SBATCH --nodes=1
-#SBATCH --tasks-per-node=8
+#SBATCH --tasks-per-node=4
 #SBATCH --time=72:00:00
 
 ## configs 

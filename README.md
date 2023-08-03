@@ -122,7 +122,6 @@ for i in {1..10}; do sbatch --export=seed=${i} --job-name=Gseed${i} --output=log
 ```
 
 7. Fit GxE models:
-
 ```
 for i in {1..10}; do sbatch --export=seed=${i} --job-name=GxEs${i} --output=logs/job_gxe_seed${i}.txt --dependency=afterok:$JOB_KRON --parsable 7-job_gxe.sh; done
 ```
