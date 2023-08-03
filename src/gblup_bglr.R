@@ -7,18 +7,20 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   cv <- 0
   fold <- 0
+  seed <- 1
 } else {
   cv <- args[1]  # 0, 1, or 2
   fold <- args[2]  # 0, 1, 2, 3 or 4
+  seed <- args[3]  # 1, ..., 10
 }
 cat('Fold:', fold, '\n')
 
 # datasets
-ytrain <- fread(paste0('output/cv', cv, '/ytrain_fold', fold, '.csv'), data.table = F)
+ytrain <- fread(paste0('output/cv', cv, '/ytrain_fold', fold, '_seed', seed, '.csv'), data.table = F)
 ytrain <- transform(ytrain, Env = factor(Env), Hybrid = factor(Hybrid))
 cat('ytrain shape:', dim(ytrain), '\n')
 
-yval <- fread(paste0('output/cv', cv, '/yval_fold', fold, '.csv'), data.table = F)
+yval <- fread(paste0('output/cv', cv, '/yval_fold', fold, '_seed', seed, '.csv'), data.table = F)
 yval <- transform(yval, Env = factor(Env), Hybrid = factor(Hybrid))
 cat('yval shape:', dim(yval), '\n')
 
@@ -103,7 +105,7 @@ fit_model <- function() {
     nIter = 5000,       # Number of iterations for the model
     burnIn = 500,       # Burnin iterations
     thin = 5,           # Sampling throughout iterations
-    saveAt = paste0('output/cv', cv, '/BGLR/GBLUP_FA_fold', fold, '_'),
+    saveAt = paste0('output/cv', cv, '/BGLR/GBLUP_FA_fold', fold, '_seed', seed, '_'),
     verbose = T
   )
   return(mod)
@@ -163,7 +165,7 @@ cols <- c('Env', 'Hybrid', 'Yield_Mg_ha', 'predicted.value')
 pred_longer <- pred_longer[, cols]
 colnames(pred_longer) <- c('Env', 'Hybrid', 'ytrue', 'ypred')
 head(pred_longer)
-fwrite(pred_longer, paste0('output/cv', cv, '/oof_gblup_bglr_model_fold', fold, '.csv'))
+fwrite(pred_longer, paste0('output/cv', cv, '/oof_gblup_bglr_model_fold', fold, '_seed', seed, '.csv'))
 
 # write predictions for train
 # pred_train_env_hybrid <- pred_train_env_hybrid[, cols]

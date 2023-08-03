@@ -126,6 +126,11 @@ for i in {1..10}; do sbatch --export=seed=${i} --job-name=Gseed${i} --output=log
 for i in {1..10}; do sbatch --export=seed=${i} --job-name=GxEs${i} --output=logs/job_gxe_seed${i}.txt --dependency=afterok:$JOB_KRON --parsable 7-job_gxe.sh; done
 ```
 
+8. fit GBLUP FA(1) models:
+```
+for i in {1..10}; do sbatch --export=seed=${i} --job-name=gblup_s${i} --output=logs/job_gblup_seed${i}.txt 8-job_gblup.sh; done
+```
+
 _Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
 
 <br><br>
@@ -142,4 +147,14 @@ find logs/ -name 'gxe_*' | xargs grep -E 'RMSE:*' | head
 Check SVD explained variance from G models:
 ```
 find logs/ -name 'g_*' | xargs grep -E 'Explained:*' | head
+```
+
+Check time spent to fit some GBLUP FA(1) models:
+```
+find logs/ -name 'gblup*' | xargs grep -E 'Time to fit:*' | head
+```
+
+Check accuracy of some fit GBLUP FA(1) models:
+```
+find logs/ -name 'gblup*' | xargs grep -E 'cor:*' | head
 ```
