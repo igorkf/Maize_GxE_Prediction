@@ -121,14 +121,14 @@ for i in {1..10}; do sbatch --export=seed=${i} --job-name=Eseed${i} --output=log
 for i in {1..10}; do sbatch --export=seed=${i} --job-name=Gseed${i} --output=logs/job_g_seed${i}.txt 6-job_g.sh; done
 ```
 
-7. Fit GxE models:
+7. Fit GxE models (will take several hours):
 ```
 for i in {1..10}; do sbatch --export=seed=${i} --job-name=GxEs${i} --output=logs/job_gxe_seed${i}.txt --dependency=afterok:$JOB_KRON --parsable 7-job_gxe.sh; done
 ```
 
-8. fit GBLUP FA(1) models:
+8. fit GBLUP FA(1) models (will take some hours):
 ```
-for i in {1..10}; do sbatch --export=seed=${i} --job-name=gblup_s${i} --output=logs/job_gblup_seed${i}.txt 8-job_gblup.sh; done
+for i in {1..10}; do sbatch --export=seed=${i} --job-name=gblupS${i} --output=logs/job_gblup_seed${i}.txt 8-job_gblup.sh; done
 ```
 
 _Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
@@ -157,4 +157,9 @@ find logs/ -name 'gblup*' | xargs grep -E 'Time to fit:*' | head
 Check accuracy of some GBLUP FA(1) models:
 ```
 find logs/ -name 'gblup*' | xargs grep -E 'cor:*' | head
+```
+
+Check accuracy of some GBLUP FA(1) models for CV1 scheme:
+```
+find logs/ -name 'gblup*' | xargs grep -E 'cor:*' | grep cv1
 ```

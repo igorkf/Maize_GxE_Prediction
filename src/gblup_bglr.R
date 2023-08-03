@@ -52,6 +52,12 @@ colnames(ytrain_wider) <- sub('Yield_Mg_ha.', '', colnames(ytrain_wider))
 ytrain_wider <- ytrain_wider[order(factor(ytrain_wider$Hybrid, levels = rownames(kmatrix))), ]  # keep same order as kmatrix
 rownames(ytrain_wider) <- NULL
 
+# remove bad envs
+if (seed %in% c(2, 3, 5) & cv == 0) {
+  ytrain_wider$GAH2_2019 <- NULL
+  ytrain_wider$WIH1_2019 <- NULL
+}
+
 if (cv == 2) {
   # we dont need some envs here
   ytrain_wider$MIH1_2020 <- NULL
