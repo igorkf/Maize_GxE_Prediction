@@ -154,7 +154,7 @@ Check time spent to fit some GBLUP FA(1) models:
 find logs/ -name 'gblup*' | xargs grep -E 'Time to fit:*' | head
 ```
 
-Check accuracy of some fit GBLUP FA(1) models:
+Check accuracy of some GBLUP FA(1) models:
 ```
 find logs/ -name 'gblup*' | xargs grep -E 'cor:*' | head
 ```
