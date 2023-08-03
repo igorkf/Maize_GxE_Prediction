@@ -1,7 +1,6 @@
 import argparse
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import lightgbm as lgbm
 from sklearn.decomposition import TruncatedSVD
@@ -231,6 +230,7 @@ if __name__ == '__main__':
         svd_cols = [f'svd{i}' for i in range(args.n_components)]
         xtrain_svd = pd.DataFrame(svd.transform(xtrain[no_lags_cols]), columns=svd_cols, index=xtrain[no_lags_cols].index)
         xval_svd = pd.DataFrame(svd.transform(xval[no_lags_cols]), columns=svd_cols, index=xval[no_lags_cols].index)
+        del svd
 
         # bind lagged yield features if needed
         if args.lag_features:

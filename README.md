@@ -128,3 +128,19 @@ for i in {1..10}; do sbatch --export=seed=${i} --job-name=GxEs${i} --output=logs
 ```
 
 _Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
+
+<br><br>
+
+
+### Fun part
+We can check some results directly from the terminal. Here are some examples:
+
+Check some GxE results:
+```
+find logs/ -name 'gxe_*' | xargs grep -E 'RMSE:*' | head
+```
+
+Check SVD explained variance from G models:
+```
+find logs/ -name 'g_*' | xargs grep -E 'Explained:*' | head
+```
