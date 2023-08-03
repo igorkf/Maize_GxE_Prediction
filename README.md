@@ -2,14 +2,16 @@
 
 _Disclaimer: You will need a lot of space (~1TB) to run all experiments._
 
-<br><br>
+<br>
 
-## Download the data
 
-Download the data [here](https://doi.org/10.25739/tq5e-ak26), extract it, and put both `Training_Data` and `Testing_Data` folders inside the `data` folder. Unzip the VCF file `Training_Data/5_Genotype_Data_All_Years.vcf.zip`.
+## Clone repository and download the data
+
+After cloning the repository, download the data [here](https://doi.org/10.25739/tq5e-ak26), extract it, and put both `Training_Data` and `Testing_Data` folders inside the `data` folder. Unzip the VCF file `Training_Data/5_Genotype_Data_All_Years.vcf.zip`.
 
 The folder structure should look as follows:
 ```
+Maize_GxE_Prediction/
 ├── data/
 │   ├── Training_Data/
 │   └── Testing_Data/
@@ -32,12 +34,6 @@ Install the conda environment:
 conda env create -f environment.yml
 ```
 
-Activate the conda environment:
-```
-conda deactivate  # if base conda is activated
-conda activate maize_gxe_prediction
-```
-
 Install R packages:
 ```
 # from CRAN
@@ -55,89 +51,12 @@ devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 
 <br><br>
 
+## Cluster settings
 
-## Preprocessing
-
-1. Create BLUEs:
-```
-JOB_BLUES=$(sbatch --parsable 1-job_blues.sh)
-```
-
-2. Create datasets for cross-validation schemes:
-```
-JOB_DATASETS=$(sbatch --dependency=afterok:$JOB_BLUES --parsable 2-job_datasets.sh)
-```
-
-3. Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
-```
-JOB_GENOMICS=$(sbatch --dependency=afterok:$JOB_DATASETS --parsable 3-job_genomics.sh)
-```
-
-4. Create Kronecker products between environmental and genomic matrices:
-```
-JOB_KRON=$(sbatch --dependency=afterok:$JOB_GENOMICS --parsable 4-job_kroneckers.sh)
-```
-
-
-<br><br>
-
-
-## Models
-5. Fit E models:
-```
-for i in {1..10}; do sbatch --export=seed=${i} --job-name=e_seed${i} --output=logs/job_e_seed${i}.txt 5-job_e.sh; done
-```
-
-6. Fit G and G+E models:
-```
-for i in {1..10}; do sbatch --export=seed=${i} --job-name=g_seed${i} --output=logs/job_g_seed${i}.txt 6-job_g.sh; done
-```
-
-
-
-1. Run all CVs for E models:   
-```
-./run_cv_e_models.sh
-```
-
-2. Run all CVs for G models:
-```
-./run_cv_g_models.sh
-```
-
-3. Run all CVs for Kronecker products (this will generate a lot of big files):
-```
-./run_cv_kroneckers.sh
-```
-
-4. Run all CVs for GxE models:   
-```
-./run_cv_gxe_models.sh
-```
-
-5. Run all CVs for GBLUP models:
-```
-./run_cv_gblup_bglr_models.sh
-```
-
-_Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
-
-<br><br>
-
-
-## If running in a cluster
-
-Configure the cluster: 
 <details>
 <summary>Click to expand</summary>
 
 ```
-module load gcc/9.3.1 mkl/19.0.5 R/4.2.2 vcftools/0.1.15 plink/5.2
-module load python/anaconda-3.10
-source /share/apps/bin/conda-3.10.sh
-conda deactivate  # if base conda is activated
-conda activate maize_gxe_prediction
-
 # create .Rprofile
 cat ~/.Rprofile
 # options(repos = c(CRAN = "https://mirrors.nics.utk.edu/cran"))
@@ -163,15 +82,49 @@ cat ~/.R/Makevars
 
 </details>
 
-<br>
+<br><br>
+
+## Preprocessing
+
+1. Create BLUEs:
+```
+JOB_BLUES=$(sbatch --parsable 1-job_blues.sh)
+```
+
+2. Create datasets for cross-validation schemes:
+```
+JOB_DATASETS=$(sbatch --dependency=afterok:$JOB_BLUES --parsable 2-job_datasets.sh)
+```
+
+3. Filter VCF and create kinships matrices (you will need `vcftools` and `plink` here):
+```
+JOB_GENOMICS=$(sbatch --dependency=afterok:$JOB_DATASETS --parsable 3-job_genomics.sh)
+```
+
+4. Create Kronecker products between environmental and genomic matrices (will take some hours):
+```
+JOB_KRON=$(sbatch --dependency=afterok:$JOB_GENOMICS --parsable 4-job_kroneckers.sh)
+```
 
 
-Use Slurm scripts to schedule all the jobs:
+<br><br>
+
+
+## Models
+5. Fit E models:
 ```
-JOB_DATA=$(sbatch --parsable job_datasets.sh)
-sbatch --dependency=afterok:$JOB_DATA job_e.sh
-sbatch --dependency=afterok:$JOB_DATA job_g.sh
-JOB_KRON=$(sbatch --dependency=afterok:$JOB_DATA job_kroneckers.sh)
-sbatch --dependency=afterok:$JOB_KRON --parsable job_gxe.sh
-sbatch --dependency=afterok:$JOB_DATA job_gblups_bglr.sh
+for i in {1..10}; do sbatch --export=seed=${i} --job-name=Eseed${i} --output=logs/job_e_seed${i}.txt 5-job_e.sh; done
 ```
+
+6. Fit G and G+E models:
+```
+for i in {1..10}; do sbatch --export=seed=${i} --job-name=Gseed${i} --output=logs/job_g_seed${i}.txt 6-job_g.sh; done
+```
+
+7. Fit GxE models:
+
+```
+for i in {1..10}; do sbatch --export=seed=${i} --job-name=GxEs${i} --output=logs/job_gxe_seed${i}.txt --dependency=afterok:$JOB_KRON --parsable 7-job_gxe.sh; done
+```
+
+_Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._

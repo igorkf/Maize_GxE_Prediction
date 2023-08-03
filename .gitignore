@@ -9,12 +9,11 @@ __pycache__/
 .venv
 *.txt
 *.parquet
-*.feather
+*.arrow
 *.log
 maize_pruned*
 .Rproj.user
 .Rhistory
-
 output/cv0/BGLR/*.dat
 output/cv1/BGLR/*.dat
 output/cv2/BGLR/*.dat

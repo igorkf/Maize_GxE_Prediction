@@ -13,7 +13,7 @@ conda deactivate
 conda activate maize_gxe_prediction
 
 
-## fit G models
+## fit G and G+E models
 for cv in {0..2}
 do 
     echo "CV=${cv}"

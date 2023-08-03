@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import lightgbm as lgbm
 from sklearn.decomposition import TruncatedSVD
@@ -49,11 +50,14 @@ def preprocess_kron(df, kinship):
     df[['Env', 'Hybrid']] = df['id'].str.split(':', expand=True)
     df = df.drop('id', axis=1).set_index(['Env', 'Hybrid'])
     df.columns = [f'{x}_{kinship}' for x in df.columns]
+    # print(df.info(), '\n')
+    # df[df.columns] = np.array(df.values, dtype=np.float32)  # downcast is too slow
+    # print(df.info(), '\n')
     return df
 
 
 def prepare_gxe(kinship):
-    kron = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}.feather')
+    kron = pd.read_feather(OUTPUT_PATH / f'kronecker_{kinship}.arrow')
     kron = preprocess_kron(kron, kinship=kinship)
     return kron
 
@@ -142,9 +146,10 @@ if __name__ == '__main__':
         del kinships
     else:
         kron = pd.concat(kroneckers, axis=1)
+        del kroneckers
         xtrain = pd.merge(ytrain, kron, on=['Env', 'Hybrid'], how='inner')
         xval = pd.merge(yval, kron, on=['Env', 'Hybrid'], how='inner')
-        del kron, kroneckers
+        del kron
 
     # split x, y
     ytrain = xtrain['Yield_Mg_ha']
@@ -167,8 +172,8 @@ if __name__ == '__main__':
         outfile = f'{outfile}_lag_features'
         xtrain_lag = pd.read_csv(OUTPUT_PATH / f'xtrain_fold{args.fold}_seed{args.seed}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
         xval_lag = pd.read_csv(OUTPUT_PATH / f'xval_fold{args.fold}_seed{args.seed}.csv', usecols=lambda x: 'yield_lag' in x or x in ['Env', 'Hybrid']).set_index(['Env', 'Hybrid'])
-        xtrain = xtrain.copy().merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner')
-        xval = xval.copy().merge(xval_lag, on=['Env', 'Hybrid'], how='inner')
+        xtrain = xtrain.merge(xtrain_lag, on=['Env', 'Hybrid'], how='inner').copy()
+        xval = xval.merge(xval_lag, on=['Env', 'Hybrid'], how='inner').copy()
     
     if args.model == 'GxE':
         if 'Env' in xtrain.columns and 'Hybrid' in xtrain.columns:
@@ -196,6 +201,7 @@ if __name__ == '__main__':
                 xval = xval.drop(lag_cols, axis=1)
             xtrain = xtrain.merge(Etrain, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
             xval = xval.merge(Eval, on=['Env', 'Hybrid'], how='left').set_index(['Env', 'Hybrid'])
+            del Etrain, Eval
 
         print('Using full set of features.')
         print('# Features:', xtrain.shape[1])
@@ -217,7 +223,7 @@ if __name__ == '__main__':
         outfile = f'{outfile}_svd{args.n_components}comps'
         print('Using svd.')
         print('# Components:', args.n_components)
-        svd = TruncatedSVD(n_components=args.n_components, random_state=42)
+        svd = TruncatedSVD(n_components=args.n_components, random_state=args.seed)
         svd.fit(xtrain[no_lags_cols])  # fit but without lagged yield features
         print('Explained variance:', svd.explained_variance_ratio_.sum())
 
