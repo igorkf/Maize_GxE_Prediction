@@ -163,3 +163,9 @@ Check accuracy of some GBLUP FA(1) models for CV1 scheme:
 ```
 find logs/ -name 'gblup*' | xargs grep -E 'cor:*' | grep cv1
 ```
+
+Check which models are done for GxE in one of the repetitions:
+```
+cat logs/job_gxe_seed6.txt
+```
+
