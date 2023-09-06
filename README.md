@@ -113,9 +113,9 @@ Check some GxE results:
 find logs/ -name 'gxe_*' | xargs grep -E 'RMSE:*' | head
 ```
 
-Check SVD explained variance from G models:
+Store SVD explained variances:
 ```
-find logs/ -name 'g_*' | xargs grep -E 'Explained:*' | head
+find logs/ -name '*cv*' | xargs grep -E '*variance*' > logs/svd_explained_variance.txt
 ```
 
 Check time spent to fit some GBLUP FA(1) models:

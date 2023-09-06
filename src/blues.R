@@ -49,50 +49,96 @@ for (variable in c('Env', 'Experiment', 'Replicate', 'Block', 'rep', 'Plot', 'Ra
 # NYS1_2020 has one block only
 # plot_field('NYS1_2020')
 
+
 # ----------------------------------------------------------------
 
 # single-environment models
 # Y = mu + Hybrid + Rep + (1 | Rep:Block + Column + Row) + e
 
 blues <- data.frame()
+cvs_h2s <- data.frame()
 for (env in envs) {
   cat(env, '\n')
+  
+  # for blues
   fixed <- as.formula('Yield_Mg_ha ~ Hybrid + Replicate')
   random <- c('Replicate:Block', 'Range', 'Pass')
+
+  # for heritability
+  fixed_h2 <- as.formula('Yield_Mg_ha ~ Replicate')
+  random_h2 <- c('Hybrid', 'Replicate:Block', 'Range', 'Pass')
   
   data_env <- droplevels(data[data$Env == env, ])
   if (all(is.na(data_env$Range)) == T) {
     cat('Removing Range factor', '\n')
     random <- random[random != 'Range']
+    random_h2 <- random_h2[random_h2 != 'Range']
   }
   if (all(is.na(data_env$Pass)) == T) {
     cat('Removing Pass factor', '\n')
     random <- random[random != 'Pass']
+    random_h2 <- random_h2[random_h2 != 'Pass']
   }
   if (length(unique(data_env$Block)) == 1) {
     cat('Removing nesting Block factor', '\n')
     random[random == 'Replicate:Block'] <- 'Replicate'
+    random_h2[random_h2 == 'Replicate:Block'] <- 'Replicate'
   }
   if (env == 'WIH1_2021') {
     cat('Removing Range due singularity with block', '\n')
     random <- random[random != 'Range']
+    random_h2 <- random_h2[random_h2 != 'Range']
   }
+  
+  # blues
   random <- as.formula(paste0('~', paste0(random, collapse = '+')))
-  
-  mod <- asreml(fixed = fixed, random = random, data = data, subset = data$Env == env, na.action = na.method(x = 'omit', y = 'include'))
-  cat('Converged:', mod$converge, '\n\n')
-  
+  mod <- asreml(
+    fixed = fixed, random = random, data = data, subset = data$Env == env, 
+    na.action = na.method(x = 'omit', y = 'include')
+  )
   pred <- predict.asreml(mod, classify = 'Hybrid')$pvals[, 1:2]
   pred$Env <- env
   cat('BLUEs:\n')
   print(summary(pred$predicted.value))
   cat('\n')
   blues <- rbind(blues, pred)
+  
+  # CV
+  res_var <- summary(mod)$varcomp[which(rownames(summary(mod)$varcomp) == 'units!R'), 'component']
+  cv <- sqrt(res_var) / mean(pred$predicted.value, na.rm = TRUE)
+  cat('CV:', cv)
+  cat('\n')
+  cv_h2 <- data.frame(Env = env, cv = cv)
+  
+  # heritability
+  random_h2 <- as.formula(paste0('~', paste0(random_h2, collapse = '+')))
+  mod <- asreml(
+    fixed = fixed_h2, random = random_h2, data = data, subset = data$Env == env,
+    predict = predict.asreml(classify = 'Hybrid', sed = TRUE),
+    na.action = na.method(x = 'omit', y = 'include')
+  )
+  h2 <- 1 - ((mod$predictions$avsed['mean'] ^ 2) / (2 * summary(mod)$varcomp['Hybrid', 'component']))
+  h2 <- unname(h2)
+  cat('H2:', h2)
+  cat('\n')
+  cv_h2$h2 <- h2
+  cvs_h2s <- rbind(cvs_h2s, cv_h2)
+  
   cat('-----------------------------\n\n')
 }
 
+
+cat('Corr(CV, h2):', cor(cvs_h2s$cv, cvs_h2s$h2))
+plot(cvs_h2s$cv, cvs_h2s$h2, xlab = 'CV', ylab = 'h2')
+
+
+# write results
 blues$Env <- as.factor(blues$Env)
 write.csv(blues[, c('Env', 'Hybrid', 'predicted.value')], 'output/blues.csv', row.names = F)
+
+cvs_h2s$Env <- as.factor(cvs_h2s$Env)
+write.csv(cvs_h2s, 'output/cvs_h2s.csv', row.names = F)
+
 
 # compare unadjusted means
 # ytrain <- rbind(read.csv('output/cv0/ytrain.csv'), read.csv('output/cv1/ytrain.csv'))
