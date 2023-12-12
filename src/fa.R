@@ -138,14 +138,14 @@ cols <- c('Env', 'Hybrid', 'Yield_Mg_ha', 'predicted.value')
 pred_env_hybrid <- pred_env_hybrid[, cols]
 colnames(pred_env_hybrid) <- c('Env', 'Hybrid', 'ytrue', 'ypred')
 if (debug == FALSE) {
-  fwrite(pred_env_hybrid, paste0('output/cv', cv, '/oof_gblup_env_hybrid_model_fold', fold, '_seed', seed, '.csv'))
+  fwrite(pred_env_hybrid, paste0('output/cv', cv, '/oof_fa_model_fold', fold, '_seed', seed, '.csv'))
 }
 
 # write predictions for train
 pred_train_env_hybrid <- pred_train_env_hybrid[, cols]
 colnames(pred_train_env_hybrid) <- c('Env', 'Hybrid', 'ytrue', 'ypred')
 if (debug == FALSE) {
-  fwrite(pred_train_env_hybrid, paste0('output/cv', cv, '/pred_train_gblup_env_hybrid_model_fold', fold, '_seed', seed, '.csv'))
+  fwrite(pred_train_env_hybrid, paste0('output/cv', cv, '/pred_train_fa_model_fold', fold, '_seed', seed, '.csv'))
 }
 
 cor(pred_env_hybrid$ytrue, pred_env_hybrid$ypred)
