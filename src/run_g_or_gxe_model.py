@@ -70,24 +70,6 @@ if __name__ == '__main__':
     individuals = ytrain['Hybrid'].unique().tolist() + yval['Hybrid'].unique().tolist()
     individuals = list(dict.fromkeys(individuals))  # take unique but preserves order (python 3.7+)
     print('# unique individuals:', len(individuals))
-    print('ytrain shape:               ', ytrain.shape)
-
-    # remove some bad envs given that we did the same in the BGLR model
-    if args.seed in [2, 3, 5] and args.cv == 0:
-        ytrain = ytrain[~ytrain['Env'].isin(['GAH2_2019', 'WIH1_2019'])].reset_index(drop=True)
-    if args.cv == 2:
-        ytrain = ytrain[~ytrain['Env'].isin([
-            'MIH1_2020', 'NCH1_2020', 'TXH2_2020', 'SCH1_2020',
-            'NYS1_2020', 'NYS1_2021', 'COH1_2021'
-            ])
-        ].reset_index(drop=True)
-        if args.fold == 2:
-             ytrain = ytrain[~ytrain['Env'].isin(['GAH2_2020', 'NEH3_2020', 'TXH1_2020'])].reset_index(drop=True)
-        if args.fold == 3:
-             ytrain = ytrain[~ytrain['Env'].isin(['NEH3_2020'])].reset_index(drop=True)
-        if args.fold == 4:
-             ytrain = ytrain[~ytrain['Env'].isin(['NEH1_2020', 'NEH3_2020'])].reset_index(drop=True)
-    print('ytrain shape after cleaning:', ytrain.shape)
 
     # load kinships or kroneckers
     kinships = []
