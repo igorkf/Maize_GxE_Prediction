@@ -44,11 +44,21 @@ for (variable in c('Env', 'Experiment', 'Replicate', 'Block', 'rep', 'Plot', 'Ra
 
 # droplevels(data[(grepl('^W10', data$Hybrid) == FALSE) & (data$Year == 2020), ])$Hybrid 
 # with(droplevels(data[data$Env == 'WIH1_2021', ]), table(Hybrid, Block))
-# plot_field('NCH1_2020')
+plot_field('NCH1_2020')
 
 # NYS1_2020 has one block only
 # plot_field('NYS1_2020')
 
+# trial
+data_NCH1_2020 <- data[data$Env == 'NCH1_2020', ]
+data_NCH1_2020 <- droplevels(data_NCH1_2020)
+with(data_NCH1_2020, table(Range))
+with(data_NCH1_2020, table(Pass))
+with(data_NCH1_2020, table(Block))
+with(data_NCH1_2020, table(Replicate))
+with(data_NCH1_2020, table(Replicate, Block))
+with(data_NCH1_2020, table(Hybrid))
+data_NCH1_2020[data_NCH1_2020$Hybrid == '2369/LH123HT', ]
 
 # ----------------------------------------------------------------
 
