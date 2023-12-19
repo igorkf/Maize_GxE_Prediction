@@ -30,7 +30,7 @@ if (cv == 0) {
 } else {
   asreml.options(
     workspace = '8gb',
-    pworkspace = '12gb',
+    pworkspace = '16gb',
     maxit = 300,
     na.action = na.method(y = 'include', x = 'omit')
   )
