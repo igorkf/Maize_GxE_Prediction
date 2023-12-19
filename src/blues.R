@@ -1,4 +1,5 @@
 library(asreml)
+library(ggplot2)
 
 asreml.options(
   workspace = '4gb',
@@ -45,6 +46,7 @@ for (variable in c('Env', 'Experiment', 'Replicate', 'Block', 'rep', 'Plot', 'Ra
 # droplevels(data[(grepl('^W10', data$Hybrid) == FALSE) & (data$Year == 2020), ])$Hybrid 
 # with(droplevels(data[data$Env == 'WIH1_2021', ]), table(Hybrid, Block))
 plot_field('NCH1_2020')
+plot_field('IAH3_2021')
 
 # NYS1_2020 has one block only
 # plot_field('NYS1_2020')
@@ -58,10 +60,39 @@ with(data_NCH1_2020, table(Block))
 with(data_NCH1_2020, table(Replicate))
 with(data_NCH1_2020, table(Replicate, Block))
 with(data_NCH1_2020, table(Hybrid))
+with(data_NCH1_2020, table(Hybrid)) |> table()
+with(data_NCH1_2020, table(Hybrid)) |> table() |> prop.table() |> round(3)
 data_NCH1_2020[data_NCH1_2020$Hybrid == '2369/LH123HT', ]
 
-# ----------------------------------------------------------------
+# another location
+with(data[data$Env == 'IAH3_2021', ], table(Hybrid)) |> table()
+with(data[data$Env == 'IAH3_2021', ], table(Hybrid)) |> table() |> prop.table() |> round(4)
 
+# hybrids per env
+colSums(aggregate(Env ~ Hybrid, FUN = table, data = data)[, -1])
+
+# number of hybrid replications per env
+rep_hybrids <- data.frame()
+for (env in envs) {
+  tab <- with(data[data$Env == env, ], table(Hybrid)) |> table()
+  tab <- as.data.frame(tab)
+  tab$Env <- env
+  rep_hybrids <- rbind(rep_hybrids, tab)
+}
+colnames(rep_hybrids) <- c('Reps', 'Freq', 'Env')
+rep_hybrids <- rep_hybrids[rep_hybrids$Reps != 0, ]
+rownames(rep_hybrids) <- NULL
+rep_hybrids <- transform(rep_hybrids, Reps = factor(Reps), Freq = Freq, Env = factor(Env, levels = envs))
+ggplot(rep_hybrids, aes(x = Reps, y = Freq)) +
+  geom_col() +
+  facet_wrap(~Env, scales = "free_x")
+
+# testers per environment
+data$Tester <- as.factor(gsub('.*\\/', '', data$Hybrid))
+tab_env_tester <- with(data[!is.na(data$Yield_Mg_ha), ], table(Env, Tester))[envs, ]
+heatmap(tab_env_tester)
+
+#############################################
 # single-environment models
 # Y = mu + Hybrid + Rep + (1 | Rep:Block + Column + Row) + e
 
