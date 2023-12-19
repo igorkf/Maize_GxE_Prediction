@@ -1,21 +1,16 @@
 #!/bin/bash
 
-#SBATCH --partition=comp06
+#SBATCH --partition=comp72
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=8
-#SBATCH --time=06:00:00
+#SBATCH --time=24:00:00
 
 ## configs 
-if command -v module &> /dev/null
-then
-    module purge
-    module load gcc/9.3.1 mkl/19.0.5 R/4.2.2
-    exit 1
-fi
+module purge
+module load gcc/9.3.1 mkl/19.0.5 R/4.2.2
 
 
 ## fit FA(1) models
-seed=$1
 debug=FALSE
 invert=FALSE
 for cv in {0..2}
