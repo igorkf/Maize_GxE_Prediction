@@ -95,9 +95,9 @@ for i in {1..10}; do sbatch --export=seed=${i} --job-name=Gseed${i} --output=log
 for i in {1..10}; do sbatch --export=seed=${i} --job-name=GxEs${i} --output=logs/job_gxe_seed${i}.txt --dependency=afterok:$JOB_KRON --parsable 7-job_gxe.sh; done
 ```
 
-8. fit GBLUP FA(1) models (will take some hours):
+8. fit GBLUP FA(1) models (will take several hours):
 ```
-for i in {1..10}; do sbatch --export=seed=${i} --job-name=gblupS${i} --output=logs/job_gblup_seed${i}.txt 8-job_gblup.sh; done
+for i in {1..10}; do sbatch --export=seed=${i} --job-name=faS${i} --output=logs/job_fa_seed${i}.txt 8-job_fa.sh; done
 ```
 
 _Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
@@ -105,7 +105,7 @@ _Some files in `output` will be big, particularly the Kronecker files, so you mi
 <br><br>
 
 
-### Fun part
+### Results (optional)
 We can check some results directly from the terminal. Here are some examples:
 
 Check some GxE results:
@@ -118,19 +118,9 @@ Store SVD explained variances:
 find logs/ -name '*cv*' | xargs grep -E '*variance*' > logs/svd_explained_variance.txt
 ```
 
-Check time spent to fit some GBLUP FA(1) models:
+Check accuracy of GBLUP FA(1) models in CV0:
 ```
-find logs/ -name 'gblup*' | xargs grep -E 'Time to fit:*' | head
-```
-
-Check accuracy of some GBLUP FA(1) models:
-```
-find logs/ -name 'gblup*' | xargs grep -E 'cor:*' | head
-```
-
-Check accuracy of some GBLUP FA(1) models for CV1 scheme:
-```
-find logs/ -name 'gblup*' | xargs grep -E 'cor:*' | grep cv1
+grep \\[1\\] logs/fa_cv0*
 ```
 
 Check which models are done for GxE in one of the repetitions:
