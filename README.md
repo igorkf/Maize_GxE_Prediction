@@ -1,7 +1,7 @@
 # Maize_GxE_Prediction
 
 This is the source code for our preprint:    
-> Fernandes, I. K., Vieira, C. C., das Gracas Dias, K. O., & Fernandes, S. B. (2024). Using machine learning to integrate genetic and environmental data to model genotype-by-environment interactions. bioRxiv. doi:10.1101/2024.02.08.579534
+> Fernandes, I. K., Vieira, C. C., das Gracas Dias, K. O., & Fernandes, S. B. (2024). Using machine learning to integrate genetic and environmental data to model genotype-by-environment interactions. bioRxiv. doi:[10.1101/2024.02.08.579534](https://doi.org/10.1101/2024.02.08.579534)
 
 <br>
 
