@@ -2,7 +2,7 @@
 
 Before starting reproducing, here are some important notes: 
 - You will need a lot of space to run all experiments
-- The scripts ran in a HPC cluster using SLURM, thus you might need to rename job partitions accordingly to the HPC cluster you use (check the `.sh` files)
+- The scripts ran in a HPC cluster using SLURM, thus you may need to rename job partitions accordingly to the HPC cluster you use (check the `.sh` files)
 
 
 ## Clone repository and download the data

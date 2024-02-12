@@ -8,7 +8,7 @@ if (length(args) == 0) {
 } else {
   cv <- args[1]  # 0, 1, or 2
   debug <- as.logical(args[2])  # FALSE or TRUE (for debugging set to TRUE)
-  kinship_type <- args[3]  # "additive", "dominant", "epi_AA", "epi_DD", or "epi_AD"
+  kinship_type <- args[3]  # "additive" or "dominant"
 }
 kinship_path <- paste0("output/kinship_", kinship_type, ".txt")
 outfile <- paste0("output/cv", cv, "/kronecker_", kinship_type, ".arrow")
@@ -28,7 +28,7 @@ for (file in list.files('output/cv0', pattern = 'xval_fold*')) {
 # bind files and aggregate
 x <- rbind(xtrain, xval)
 rm(xtrain); rm(xval); gc()
-x <- x[, !grepl("yield_lag", colnames(x))]  # remove all yield related features
+x <- x[, !grepl("yield_lag", colnames(x))]  # remove all yield-related features
 x$Hybrid <- NULL
 x <- aggregate(x[, -1], by = list(x$Env), FUN = mean)  # take mean within envs
 rownames(x) <- x$Group.1
