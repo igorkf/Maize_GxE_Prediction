@@ -64,13 +64,12 @@ JOB_DATASETS=$(sbatch --dependency=afterok:$JOB_BLUES --parsable 2-job_datasets.
 JOB_GENOMICS=$(sbatch --dependency=afterok:$JOB_DATASETS --parsable 3-job_genomics.sh)
 ```
 
-4. Create Kronecker products between environmental and genomic matrices (will take some hours):
+4. Create Kronecker products between environmental and genomic relationship matrices (will take some hours):
 ```
 JOB_KRON=$(sbatch --dependency=afterok:$JOB_GENOMICS --parsable 4-job_kroneckers.sh)
 ```
 
-
-<br><br>
+<br>
 
 
 ## Models
@@ -96,7 +95,7 @@ for i in {1..10}; do sbatch --export=seed=${i} --job-name=faS${i} --output=logs/
 
 _Some files in `output` will be big, particularly the Kronecker files, so you might want to exclude them later._
 
-<br><br>
+<br>
 
 
 ### Results (optional)
