@@ -1,3 +1,10 @@
+# Maize_GxE_Prediction
+
+This is the source code for our preprint:    
+> Fernandes, I. K., Vieira, C. C., das Gracas Dias, K. O., & Fernandes, S. B. (2024). Using machine learning to integrate genetic and environmental data to model genotype-by-environment interactions. bioRxiv. doi:10.1101/2024.02.08.579534
+
+<br>
+
 # How to reproduce the results
 
 Before starting reproducing, here are some important notes: 
@@ -71,7 +78,6 @@ JOB_KRON=$(sbatch --dependency=afterok:$JOB_GENOMICS --parsable 4-job_kroneckers
 
 <br>
 
-
 ## Models
 5. Fit E models:
 ```
@@ -98,7 +104,7 @@ _Some files in `output` will be big, particularly the Kronecker files, so you mi
 <br>
 
 
-### Results (optional)
+# Results (optional)
 We can check some results directly from the terminal. Here are some examples:
 
 Check some GxE results:
