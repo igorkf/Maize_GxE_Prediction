@@ -17,9 +17,6 @@ parser.add_argument('--seed', type=int, required=True)
 parser.add_argument('--model', choices={'G', 'GxE'}, required=True)
 parser.add_argument('--A', action='store_true', default=False)
 parser.add_argument('--D', action='store_true', default=False)
-parser.add_argument('--epiAA', action='store_true', default=False)
-parser.add_argument('--epiDD', action='store_true', default=False)
-parser.add_argument('--epiAD', action='store_true', default=False)
 parser.add_argument('--E', action='store_true', default=False)
 parser.add_argument('--svd', action='store_true', default=False)
 parser.add_argument('--n_components', type=int, default=100)
@@ -93,36 +90,6 @@ if __name__ == '__main__':
             kinships.append(D)
         else:
             kroneckers.append(prepare_gxe('dominant'))
-
-    if args.epiAA:
-        print('Using epiAA matrix.')
-        outfile = f'{outfile}_epiAA'
-        if args.model == 'G':
-            epiAA = pd.read_csv('output/kinship_epi_AA.txt', sep='\t')
-            epiAA = preprocess_g(epiAA, 'epi_AA', individuals)
-            kinships.append(epiAA)
-        else:
-            kroneckers.append(prepare_gxe('epi_AA'))
-
-    if args.epiDD:
-        print('Using epiDD matrix.')
-        outfile = f'{outfile}_epiDD'
-        if args.model == 'G':
-            epiDD = pd.read_csv('output/kinship_epi_DD.txt', sep='\t')
-            epiDD = preprocess_g(epiDD, 'epi_DD', individuals)
-            kinships.append(epiDD)
-        else:
-            kroneckers.append(prepare_gxe('epi_DD'))
-
-    if args.epiAD:
-        print('Using epiAD matrix.')
-        outfile = f'{outfile}_epiAD'
-        if args.model == 'G':
-            epiAD = pd.read_csv('output/kinship_epi_AD.txt', sep='\t')
-            epiAD = preprocess_g(epiAD, 'epi_AD', individuals)
-            kinships.append(epiAD)
-        else:
-            kroneckers.append(prepare_gxe('epi_AD'))
 
     if args.E:
         if args.model == 'G':
