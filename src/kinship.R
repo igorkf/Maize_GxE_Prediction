@@ -25,29 +25,13 @@ dt_num[1:5, 1:5]
 # adding 1 to have it as 0, 1, 2
 dt <- t(dt_num[, -1:-5]) + 1
 
-# create an Additive relationship matrix
-kin_A <- Gmatrix(dt)
-fwrite(kin_A, "output/kinship_additive.txt", sep = "\t", quote = F)
-cat("kinship A ok\n")
+# create an additive relationship matrix
+G <- Gmatrix(dt)
+fwrite(G, "output/kinship_additive.txt", sep = "\t", quote = F)
+cat("kinship G ok\n")
 
-# create a dominant relationship matrix
-kin_d <- Gmatrix(dt, "Vitezica")
-fwrite(kin_d, "output/kinship_dominant.txt", sep = "\t", quote = F)
+# create a dominance relationship matrix
+D <- Gmatrix(dt, "Vitezica")
+fwrite(D, "output/kinship_dominant.txt", sep = "\t", quote = F)
 cat("kinship D ok\n")
-
-# creating epistatic relationship matrices
-# Additive x Additive
-kin_AA <- kin_A * kin_A
-fwrite(kin_AA, "output/kinship_epi_AA.txt", sep = "\t", quote = F)
-cat("kinship epi AA ok\n")
-
-# Dominante x Dominant
-kin_DD <- kin_d * kin_d
-fwrite(kin_DD, "output/kinship_epi_DD.txt", sep = "\t", quote = F)
-cat("kinship epi DD ok\n")
-
-# Additive x Dominant
-kin_AD <- kin_A * kin_d
-fwrite(kin_AD, "output/kinship_epi_AD.txt", sep = "\t", quote = F)
-cat("kinship epi AD ok\n")
 

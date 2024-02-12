@@ -1,15 +1,15 @@
 # How to reproduce the results
 
-_Disclaimer: You will need a lot of space (~400GB) to run all experiments._
-
-<br>
+Before starting reproducing, here are some important notes: 
+- You will need a lot of space to run all experiments
+- The scripts ran in a HPC cluster using SLURM, thus you might need to rename job partitions accordingly to the HPC cluster you use (check the `.sh` files)
 
 
 ## Clone repository and download the data
 
 After cloning the repository, download the data [here](https://doi.org/10.25739/tq5e-ak26), extract it, and put both `Training_Data` and `Testing_Data` folders inside the `data` folder. Unzip the VCF file `Training_Data/5_Genotype_Data_All_Years.vcf.zip`.
 
-The folder structure should look as follows:
+The folder structure should be as follows:
 ```
 Maize_GxE_Prediction/
 ├── data/
@@ -18,15 +18,12 @@ Maize_GxE_Prediction/
 ├── src/
 ├── logs/
 ├── output/
-│   ├── cv0/
-|   |   └── BGLR/
+│   ├── cv0/  
 │   ├── cv1/
-|   |   └── BGLR/
-├── |── cv2/
-|   |   └── BGLR/
+│   └── cv2/
 ```
 
-<br><br>
+<br>
 
 ## Setup conda and R packages
 Install the conda environment:
@@ -41,17 +38,14 @@ install.packages("arrow")
 install.packages("data.table")
 install.packages("AGHmatrix")
 install.packages("devtools")
-install.packages("asreml")  # for BLUEs
-install.packages("BGLR")  # for FA
+install.packages("asreml")  # for BLUEs and FA
 
 # from github source
 setRepositories(ind = 1:2)
 devtools::install_github("samuelbfernandes/simplePHENOTYPES")
 ```
 
-</details>
-
-<br><br>
+<br>
 
 ## Preprocessing
 
