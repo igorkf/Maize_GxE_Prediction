@@ -4,7 +4,8 @@ This is the source code for our preprint:
 ```
 @article{fernandes2024,
   author = {Igor K. Fernandes and Caio C. Vieira and Kaio O. G. Dias and Samuel B. Fernandes},
-  title = {Using machine learning to integrate genetic and environmental data to model genotype-by-environment interactions},
+  title = {Using machine learning to integrate genetic and environmental data 
+	   to model genotype-by-environment interactions},
   year = {2024},
   doi = {10.1101/2024.02.08.579534},
   journal = {bioRxiv}
