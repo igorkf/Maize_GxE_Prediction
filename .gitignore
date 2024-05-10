@@ -17,3 +17,4 @@ maize_pruned*
 output/cv0/BGLR/*.dat
 output/cv1/BGLR/*.dat
 output/cv2/BGLR/*.dat
+latex
