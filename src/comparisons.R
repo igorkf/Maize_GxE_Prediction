@@ -43,8 +43,7 @@ pairs2 <- as.data.frame(pairs(emm2)) |>
 # latex table
 all_pairs <- cbind(pairs0, pairs1, pairs2)
 all_pairs[, c(3, 5, 7)] <- lapply(all_pairs[, c(3, 5, 7)], p_text)
-kable(all_pairs, format = "latex", booktabs = T, escape = F, linesep = "",
-      caption = "Estimate and p-value for the predictive ability pairwise comparisons among models for the different cross-validation (CV) schemes. Empty cells represent a non-significant difference using a 0.05 significance level.",
-      label = "paircomp") |>
+kable(all_pairs, format = "latex", booktabs = T, escape = F, 
+      linesep = "",caption = "...", label = "paircomp") |>
   kable_classic() |>
   add_header_above(c(" " = 1, "CV0" = 2, "CV1" = 2, "CV2" = 2))
