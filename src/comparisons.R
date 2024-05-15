@@ -19,7 +19,8 @@ fisher_z <- function(r) {
 # Prediction accuracy
 pred <- data.table::fread("output/all_predictions.csv", data.table = F) |>
   rename(Field_Location = `Field Location`) |>
-  mutate(Model = gsub("\\(|\\)|\\+", "_", Model))
+  mutate(Model = factor(Model, levels = c("FA", "E", "G(A)", "G(D)", "G(A)+E", "G(D)+E", "G(A)EI", "G(D)EI")))
+  # mutate(Model = gsub("\\(|\\)|\\+", "_", Model))
 
 # DEPRECATED
 # pred_agg <- pred |>
@@ -30,6 +31,7 @@ pred <- data.table::fread("output/all_predictions.csv", data.table = F) |>
 #   ungroup()
 
 pred_wider0 <- pred |>
+  # TODO: check sample size
   group_by(Field_Location, Hybrid, Model, CV) |> 
   summarise(ytrue = mean(ytrue), ypred = mean(ypred)) |>
   filter(CV == 0) |>
@@ -39,23 +41,43 @@ pred_wider0 <- pred |>
   select(row, Field_Location, Hybrid, Model, ytrue, ypred) |>
   tidyr::pivot_wider(names_from = c(Model), values_from = c(ytrue, ypred)) |>
   select(Field_Location, Hybrid, ytrue_E, contains("ypred")) |>
-  rename(ytrue = ytrue_E)
+  rename(ytrue = ytrue_E) |>
+  rename_at(vars(contains("ypred")), ~sub("ypred_", "", .))
 
 # comparing two correlated correlations
 # https://doi.org/10.1037/0033-2909.111.1.172
-N <- nrow(pred_wider0)
-r <- cor(pred_wider0[, grep("ytrue|ypred", colnames(pred_wider0))])
-r_y_x1 <- r[1, 2]
-r_y_x2 <- r[1, 3]
-r_x1_x2 <- r[2, 3]
-r2_bar <- ((r_y_x1 ^ 2) + (r_y_x2 ^ 2)) / 2
-f <- (1 - r_x1_x2) / (2 * (1 - r2_bar))
-f <- min(1, f)
-
+pw_comps <- data.frame()
+N <- nrow(pred_wider0)  # TODO: check sample size
+r <- cor(pred_wider0[, -c(1:2)])
 z <- fisher_z(r)
-zis <- z[1, 2:ncol(z), drop = F]
-# contr <- matrix(1, ncol = ncol(zis))  # all
-# dot <- zis %*% t(contr)
+combs <-  combn(colnames(r)[2:ncol(r)], 2, simplify = F)
+for (comb in combs) {
+  x1 <- comb[1]
+  x2 <- comb[2]
+  idx_x1 <- which(colnames(r) == x1)
+  idx_x2 <- which(colnames(r) == x2)
+  z_y_x1 <- z[1, idx_x1]
+  z_y_x2 <- z[1, idx_x2]
+  r_y_x1 <- r[1, idx_x1]
+  r_y_x2 <- r[1, idx_x2]
+  r_x1_x2 <- r[idx_x1, idx_x2]
+  r2_bar <- ((r_y_x1 ^ 2) + (r_y_x2 ^ 2)) / 2
+  f <- (1 - r_x1_x2) / (2 * (1 - r2_bar))
+  f <- min(1, f)
+  h <- (1 - (f * r_x1_x2)) / (1 - r2_bar)
+  estimate <- (z_y_x1 - z_y_x2)
+  Z <- estimate * sqrt((N - 3) / (2 * (1 - r_x1_x2) * h))
+  pvalue <- 2 * (1 - pnorm(abs(Z)))
+  pw_comp <- data.frame(contrast = paste(x1, "-", x2), estimate = estimate, pvalue = pvalue)
+  pw_comps <- rbind(pw_comps, pw_comp)
+}
+
+# TODO: adjust pvalues for multiple testing correction?
+pw_comps$pvalue_adj <- p.adjust(pw_comps$pvalue, method = "bonferroni")
+pw_comps$signif <- p_text(pw_comps$pvalue_adj)
+
+##################################################################
+
 
 
 mod0 <- aov(pred_ab ~ Model, data = pred_agg[pred_agg$CV == 0, ])
