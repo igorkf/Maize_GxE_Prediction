@@ -67,7 +67,9 @@ compare_two_cor_cor <- function(tab) {
     Z <- diff * sqrt((N - 3) / (2 * (1 - r_x1_x2) * h))
     pvalue <- 2 * (1 - pnorm(abs(Z)))
     pw_comp <- data.frame(
-      contrast = paste(x1, "-", x2), 
+      contrast = paste(x1, "-", x2),
+      r1 = r_y_x1,
+      r2 = r_y_x2,
       estimate = r_y_x1 - r_y_x2,  # original scale (same as tanh(z_y_x1) - tanh(z_y_x2))
       pvalue = pvalue
     )
@@ -78,12 +80,16 @@ compare_two_cor_cor <- function(tab) {
   return(pw_comps)
 }
 
-pairs0 <- compare_two_cor_cor(pred_wider0) |> mutate(estimate = round(estimate, 3))
-pairs1 <- compare_two_cor_cor(pred_wider1) |> mutate(estimate = round(estimate, 3))
-pairs2 <- compare_two_cor_cor(pred_wider2) |> mutate(estimate = round(estimate, 3))
+pairs0 <- compare_two_cor_cor(pred_wider0) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 3))
+pairs1 <- compare_two_cor_cor(pred_wider1) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 3))
+pairs2 <- compare_two_cor_cor(pred_wider2) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 3))
 
 # latex table
-all_pairs <- cbind(pairs2, pairs1, pairs0)[, c(1, 2, 5, 7, 10, 12, 15)]
+all_pairs <- cbind(
+  select(pairs2, c(contrast, estimate, signif)), 
+  select(pairs1, c(estimate, signif)),
+  select(pairs0, c(estimate, signif))
+)
 kable(all_pairs, format = "latex", booktabs = T, escape = F, 
       linesep = "", caption = "...", label = "paircomp") |>
   kable_classic() |>
