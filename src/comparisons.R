@@ -84,6 +84,11 @@ pairs0 <- compare_two_cor_cor(pred_wider0) |> mutate_at(vars(r1, r2, estimate), 
 pairs1 <- compare_two_cor_cor(pred_wider1) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 2))
 pairs2 <- compare_two_cor_cor(pred_wider2) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 2))
 
+# boost over FA
+pairs0 |> filter(startsWith(contrast, "FA")) |> mutate(boost = (r2 / r1) - 1) |> select(contrast, boost)
+pairs1 |> filter(startsWith(contrast, "FA")) |> mutate(boost = (r2 / r1) - 1) |> select(contrast, boost)
+pairs2 |> filter(startsWith(contrast, "FA")) |> mutate(boost = (r2 / r1) - 1) |> select(contrast, boost)
+
 # latex table
 all_pairs <- cbind(
   select(pairs2, c(contrast, estimate, signif)), 
