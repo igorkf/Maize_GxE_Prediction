@@ -75,14 +75,14 @@ compare_two_cor_cor <- function(tab) {
     )
     pw_comps <- rbind(pw_comps, pw_comp)
   }
-  pw_comps$pvalue_adj <- p.adjust(pw_comps$pvalue, method = "bonferroni")
+  pw_comps$pvalue_adj <- p.adjust(pw_comps$pvalue, method = "bonferroni")  # p-value * m
   pw_comps$signif <- p_text(pw_comps$pvalue_adj)
   return(pw_comps)
 }
 
-pairs0 <- compare_two_cor_cor(pred_wider0) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 3))
-pairs1 <- compare_two_cor_cor(pred_wider1) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 3))
-pairs2 <- compare_two_cor_cor(pred_wider2) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 3))
+pairs0 <- compare_two_cor_cor(pred_wider0) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 2))
+pairs1 <- compare_two_cor_cor(pred_wider1) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 2))
+pairs2 <- compare_two_cor_cor(pred_wider2) |> mutate_at(vars(r1, r2, estimate), ~round(.x, 2))
 
 # latex table
 all_pairs <- cbind(
