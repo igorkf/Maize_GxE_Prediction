@@ -20,9 +20,7 @@ to_wider <- function(tab, cv) {
 
 p_text <- function(x) {
   case_when(
-    x >= 0.05 ~ "",
-    x < 0.001 ~ "***",
-    x < 0.01 ~ "**",
+    x >= 0.05 ~ "n.s.",
     x < 0.05 ~ "*"
   )
 }
