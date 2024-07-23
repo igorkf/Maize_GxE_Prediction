@@ -1,14 +1,21 @@
 # Maize_GxE_Prediction
 
-This is the source code for our preprint:    
-```
-@article{fernandes2024,
-  author = {Igor K. Fernandes and Caio C. Vieira and Kaio O. G. Dias and Samuel B. Fernandes},
-  title = {Using machine learning to integrate genetic and environmental data 
-	   to model genotype-by-environment interactions},
-  year = {2024},
-  doi = {10.1101/2024.02.08.579534},
-  journal = {bioRxiv}
+This is the source code for our paper [Using machine learning to combine genetic and environmental data for maize grain yield predictions across multi-environment trials](10.1007/s00122-024-04687-w).    
+Citation:
+```r
+﻿@Article{Fernandes2024,
+  author={Fernandes, Igor K. and Vieira, Caio C. and Dias, Kaio O. G. and Fernandes, Samuel B.},
+  title={Using machine learning to combine genetic and environmental data for maize grain yield predictions across multi-environment trials},
+  journal={Theoretical and Applied Genetics},
+  year={2024},
+  month={Jul},
+  day={23},
+  volume={137},
+  number={8},
+  pages={189},
+  issn={1432-2242},
+  doi={10.1007/s00122-024-04687-w},
+  url={https://doi.org/10.1007/s00122-024-04687-w}
 }
 ```
 
