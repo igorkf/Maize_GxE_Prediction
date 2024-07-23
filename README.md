@@ -1,9 +1,11 @@
 # Maize_GxE_Prediction
 
-This is the source code for our paper [Using machine learning to combine genetic and environmental data for maize grain yield predictions across multi-environment trials](10.1007/s00122-024-04687-w).    
+This is the source code for our paper:   
+Fernandes, I.K., Vieira, C.C., Dias, K.O.G. et al. Using machine learning to combine genetic and environmental data for maize grain yield predictions across multi-environment trials. Theor Appl Genet 137, 189 (2024). https://doi.org/10.1007/s00122-024-04687-w.
+
 Citation:
 ```r
-﻿@Article{Fernandes2024,
+﻿@article{fernandes2024,
   author={Fernandes, Igor K. and Vieira, Caio C. and Dias, Kaio O. G. and Fernandes, Samuel B.},
   title={Using machine learning to combine genetic and environmental data for maize grain yield predictions across multi-environment trials},
   journal={Theoretical and Applied Genetics},
